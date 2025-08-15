@@ -14,11 +14,12 @@ if __name__ == '__main__':
     view = cw_view.CW_View(model)
     controller = cw_controller.CW_Controller(model, view)
     
-    model.grid.randomise_letters()
-    view.draw_screen()
+    # model.grid.randomise_letters()
+    # model.grid.randomise_blocked_cells()
+    # view.draw_screen()
     
     while controller.running:
-        controller.process_input()
+        view.window.mainloop()
     
     
     

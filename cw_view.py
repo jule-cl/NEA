@@ -20,8 +20,8 @@ class CW_View:
         model.register_listener(self.model_event)
         
         # window properties
-        self.__screen_width = 800
-        self.__screen_height = 600
+        self.__screen_width = 1366
+        self.__screen_height = 768
         self.__screen_size = (self.__screen_width, self.__screen_height)
 
         # initialize pygame and window
@@ -61,6 +61,9 @@ class CW_View:
                     # draw blocked cell (skip the next parts)
                     pygame.draw.rect(self.game_surf, BORDER_COLOUR, rect_obj)
                     continue
+                if letter == '.':
+                    # doesn't draw anything
+                    continue
                 else:
                     pygame.draw.rect(self.game_surf, GRID_CELL_COLOUR, rect_obj)
                                    
@@ -80,7 +83,7 @@ class CW_View:
     def draw_screen(self):
         self.game_surf.fill(BG_COLOUR)
         
-        self.__draw_grid(Coord(self.__screen_width//2, self.__screen_height//2), 200)
+        self.__draw_grid(Coord(self.__screen_width//2, self.__screen_height//2), 500)
         
         self.screen.blit(self.game_surf, (0, 0))
         pygame.display.flip()

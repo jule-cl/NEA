@@ -4,7 +4,7 @@ class CW_Model:
     def __init__(self):
         from cw_grid import Grid
         
-        self.grid = Grid(5)
+        self.grid = Grid(9)
         self.__listeners = []
         
     def register_listener(self, listener):

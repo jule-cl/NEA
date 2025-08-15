@@ -2,6 +2,7 @@
 
 from copy import deepcopy
 from itertools import product
+from random import randint
 import word_funcs
 
 class Grid:
@@ -97,8 +98,7 @@ class Grid:
                     word += next_char
                     row_pointer += 1
                     
-                self.__word_list_down[index+1] = word
-            
+                self.__word_list_down[index+1] = word   
         
     def change_cell(self, row, col, new_char):
         ## check if the parameters are valid
@@ -117,10 +117,39 @@ class Grid:
         # update word lists no matter what
         self.__update_word_lists()
         
-    def check_word_validity(self):
+    # clear means no letters
+    def __is_grid_clear(self):
+        for row in self.__grid:
+            for cell in row:
+                if cell != '-' and cell != '.': return False
+        return True
+    
+    # empty means no letters + no blocked cells
+    def __is_grid_empty(self):
+        for row in self.__grid:
+            for cell in row:
+                if cell != '.': return False
+        return True
+
+    # checks if ALL the words in the grid are valid and completely filled
+    def check_grid_words_validity(self):
         for across_word in self.__word_list_across.values():
-            ## TODO check if word exists
-            pass
+            if not word_funcs.is_valid_word(across_word): return False
+        for down_word in self.__word_list_down.values():
+            if not word_funcs.is_valid_word(down_word): return False
+        return True
+        
+    def randomise_blocked_cells(self):
+        if self.__grid_size % 2 == 0: return -1 # weird grid size
+        if not self.__is_grid_empty(): return -1 # grid has stuff in it, need to be empty
+        
+        filling_type = randint(0, 3)
+        horizontal = filling_type & 1
+        vertical = (filling_type & 2)//2
+        
+        for row in range(horizontal, self.__grid_size, 2):
+            for col in range(vertical, self.__grid_size, 2):
+                self.change_cell(row, col, '-')
         
     '''
     DEBUGGING METHODS
