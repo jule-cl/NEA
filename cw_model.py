@@ -10,7 +10,7 @@ class CW_Model:
     def register_listener(self, listener):
         self.__listeners.append(listener)
         
-    def __notify(self, event):
+    def __broadcast(self, event):
         for listener in self.__listeners:
             listener(event)
             
