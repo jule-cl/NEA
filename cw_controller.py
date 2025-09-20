@@ -1,16 +1,13 @@
 # cw_controller.py
 
-import pygame
-from pygame.locals import *
+from cw_view import CW_View
 import threading
 
 class CW_Controller:
-    def __init__(self, model, view):
-        self.model = model
-        self.view = view
-        self.running = True
+    """Controller to coordinate between model and view"""
+    def __init__(self):
+        self.view = CW_View()
+        # In a real crossword, you'd have a model for the puzzle data
         
-    def process_input(self):
-        # pygame event queue
-        for event in pygame.event.get():
-            if event.type == QUIT: self.running = False
+    def show_window(self):
+        self.view.show()

@@ -24,5 +24,5 @@ def is_valid_word(word):
     if word == ALL_WORDS[left_pointer] or word == ALL_WORDS[right_pointer]: return True
     return False
         
-        
-print(is_valid_word("syzygy"))
+if __name__ == '__main__':
+    print(is_valid_word("syzygy"))

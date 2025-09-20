@@ -1,7 +1,9 @@
 # cw_main.py
 
-from cw_model import CW_Model
-from cw_view import CW_View
+import sys
+from PyQt5.QtWidgets import QApplication
+# from cw_model import CW_Model
+# from cw_view import CW_View
 from cw_controller import CW_Controller
 
 if __name__ == '__main__':
@@ -10,16 +12,11 @@ if __name__ == '__main__':
     # view has reference to model (to know the information to display)
     # controller (manages input/info passing) needs a reference to both
     
-    model = CW_Model()
-    view = CW_View(model)
-    controller = CW_Controller(model, view)
+    app = QApplication(sys.argv)
     
-    # model.grid.randomise_letters()
-    # model.grid.randomise_blocked_cells()
-    view.draw_screen()
+    controller = CW_Controller()
+    controller.show_window()
     
-    while controller.running:
-        controller.process_input()
-    
+    sys.exit(app.exec())
     
     
