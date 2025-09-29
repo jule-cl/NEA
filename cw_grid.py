@@ -104,6 +104,7 @@ class Grid:
                     
                 self.__word_list_down[index+1] = word   
         
+    # TODO buggy
     def __change_cell(self, row, col, new_char):
         ## check if the parameters are valid
         # coordinate check
@@ -180,7 +181,8 @@ class Grid:
         output_string += '\n'.join([f"{number} down: {word}" for number, word in sorted_down])
 
         print(output_string)
-        
+       
+    # TODO don't use this 
     def randomise_letters(self):
         from random import randint
         from string import ascii_uppercase
@@ -193,7 +195,7 @@ if __name__ == '__main__':
     
     test_grid = Grid(9)
     
-    test_grid.generate_layout()
+    test_grid.generate_layout(ratio=3.2)
 
     # test_grid.print_grid()
     test_grid.print_grid()

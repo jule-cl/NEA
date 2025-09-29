@@ -14,7 +14,7 @@ O_DIRECTIONS = [(1, 0), (-1, 0), (0, 1), (0, -1)]
 
 class Crossword_layout_gen:
     
-    def __init__(self, size, symmetry=2, ratio=3.5, longest_word=13):
+    def __init__(self, size, symmetry=2, ratio=3.2, longest_word=13):
         # grid is at (1, 1) top-left, goes to (s, s) bottom-right, and (row, column)
         # boundary is r=0, r=s+1, c=0, c=s+1
         
@@ -266,7 +266,8 @@ class Crossword_layout_gen:
         
         
 if __name__ == '__main__':
-    filler = Crossword_layout_gen(size=9, ratio=3.5)
+    ## empty/block ratio of 3.2 looks nice
+    filler = Crossword_layout_gen(size=9, ratio=3.2)
     
     filler.generate_layout()
     
