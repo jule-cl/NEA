@@ -24,13 +24,6 @@ class Crossword_layout_gen:
         
         if not self.__is_grid_empty(): raise Exception("the grid must be empty")
 
-        # elements are tuples that take the form 
-        # (row, col, direction)
-        # direction is 'AD', 'A', or 'D'
-        # 0-indexed
-        self.__numbered_cells = []
-        self.__update_numbered_cells()
-        
         if symmetry != 2 and symmetry != 4: raise Exception("grid symmetry is wrong")
         self.__SYMMETRY = symmetry
         self.__RATIO = ratio
@@ -71,26 +64,7 @@ class Crossword_layout_gen:
             
         for t_row, t_col in to_flip:
             self.__flip_cell(t_row, t_col)
-        
-    def __update_numbered_cells(self):
-        self.__numbered_cells = []
-        for row, col in product(range(self.__GRID_SIZE), repeat=2):
-            # check if cell should be numbered
-            direction = ""
-            # already blocked
-            if self.__grid[row][col] == BLOCKED_CELL: continue
-            # across
-            if col == self.__GRID_SIZE-1: pass
-            elif (self.__grid[row][col-1] == BLOCKED_CELL or col == 0) and self.__grid[row][col+1] != BLOCKED_CELL: 
-                direction += 'A'
-            # down
-            if row == self.__GRID_SIZE-1: pass
-            elif (self.__grid[row-1][col] == BLOCKED_CELL or row == 0) and self.__grid[row+1][col] != BLOCKED_CELL: 
-                direction += 'D'
-            
-            # add to list if exists
-            if direction: self.__numbered_cells.append((row, col, direction))
-            
+  
     # should never be used, too inefficient
     def __update_bitboard(self):
         new_cells = []
@@ -131,14 +105,13 @@ class Crossword_layout_gen:
             t_row, t_col = randint(1, self.__GRID_SIZE), randint(1, self.__GRID_SIZE)
             
             if self.__grid[t_row][t_col] == BLOCKED_CELL: continue
-            
-            # print(t_row, t_col)
+
             self.__flip_cell_sym(t_row, t_col)
             
             if not self.__grid_valid():
                 self.__flip_cell_sym(t_row, t_col)
                 
-        return self.get_borderless_grid()
+        return self.__grid
            
     def __grid_valid(self):
         return self.__two_letter_word_check() and self.__connectivity_check() \

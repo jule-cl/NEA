@@ -7,5 +7,11 @@ class App_settings:
     BLACK = "#453245"
     WHITE = "#e5fff6"
     
+    # dimensions
+    WINDOW_W = 800
+    WINDOW_H = 600
+    GRID_DIM = 500
+    
+    
     class messages:
         GRID_SIZE_CHOSEN = 'grid size chosen'

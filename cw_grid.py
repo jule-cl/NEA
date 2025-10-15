@@ -20,6 +20,7 @@ class Grid:
         any letter means the cell has that character
         
         grid system is top-left 0/0, row then column
+        there IS a border so the actual grid goes from 1/1 to s/s
         """
         self.__grid = []
         self.empty_grid()
@@ -39,19 +40,11 @@ class Grid:
         self.__update_word_lists()
         
     """
-    GETTERS
-    """
-    def get_grid(self):
-        return self.__grid
-    
-    def get_grid_size(self):
-        return self.__GRID_SIZE
-        
-    """
     METHODS
     """
     def empty_grid(self):
-        self.__grid = [[EMPTY_CELL for __ in range(self.__GRID_SIZE)] for _ in range(self.__GRID_SIZE)]
+        self.__grid = [[BLOCKED_CELL]*(self.__GRID_SIZE+2) if row == 0 or row == self.__GRID_SIZE+1
+                       else [BLOCKED_CELL]+[EMPTY_CELL]*self.__GRID_SIZE+[BLOCKED_CELL] for row in range(self.__GRID_SIZE+2)]
         
     def clear_grid(self):
         newGrid = [[EMPTY_CELL if cell != BLOCKED_CELL else BLOCKED_CELL for cell in row] for row in self.__grid]
@@ -104,6 +97,9 @@ class Grid:
                     
                 self.__word_list_down[index+1] = word   
         
+    def __get_constraints(self):
+        self.__word_list_across
+        
     # TODO buggy
     def __change_cell(self, row, col, new_char):
         ## check if the parameters are valid
@@ -139,8 +135,8 @@ class Grid:
     
     # empty means no letters + no blocked cells
     def __is_grid_empty(self):
-        for row in self.__grid:
-            for cell in row:
+        for row in self.__grid[1:-1]:
+            for cell in row[1:-1]:
                 if cell != EMPTY_CELL: return False
         return True
 
@@ -157,14 +153,21 @@ class Grid:
         
         layout = Crossword_layout_gen(self.__GRID_SIZE, symmetry, ratio, longest_word)
         self.__grid = layout.generate_layout()
+        
+        self.__update_numbered_cells()
+
 
     '''
     DEBUGGING METHODS
     '''
+    def get_borderless_grid(self):
+        final_grid = [row[1:-1] for row in self.__grid[1:-1]]
+        return final_grid
+    
     def print_grid(self):
         row_delim = '+-'*(self.__GRID_SIZE)+'+'
         output = row_delim+'\n'
-        output += ('\n'+row_delim+'\n').join(['|'.join(['']+['#' if c else '.' for c in row]+['']) for row in self.__grid])
+        output += ('\n'+row_delim+'\n').join(['|'.join(['']+['#' if c else '.' for c in row]+['']) for row in self.get_borderless_grid()])
         output += '\n'+row_delim
         print(output)
         
@@ -197,6 +200,6 @@ if __name__ == '__main__':
     
     test_grid.generate_layout(ratio=3.2)
 
-    # test_grid.print_grid()
     test_grid.print_grid()
+    test_grid.print_numbered_cells()
 

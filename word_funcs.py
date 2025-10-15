@@ -23,6 +23,20 @@ def is_valid_word(word):
     
     if word == ALL_WORDS[left_pointer] or word == ALL_WORDS[right_pointer]: return True
     return False
+
+
+# filtering method
+def get_words_that_match(regex, word_list=ALL_WORDS):
+    from copy import deepcopy
+    
+    candidates = [w for w in ALL_WORDS if len(w)==len(regex)]
+    
+    for pos, letter in enumerate(regex):
+        if letter == '*': continue
+        candidates = [w for w in candidates if w[pos] == letter.lower()]
+    
+    return candidates
         
 if __name__ == '__main__':
-    print(is_valid_word("syzygy"))
+    # print(is_valid_word("syzygy"))
+    print(get_words_that_match("*y*y*y"))

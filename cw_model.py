@@ -1,29 +1,14 @@
 # cw_model.py
 
 class CW_Model:
-    def __init__(self):
+    def __init__(self, size):
         from cw_grid import Grid
         
-        self.grid = Grid(9)
-        self.__listeners = []
-        
-    def register_listener(self, listener):
-        self.__listeners.append(listener)
-        
-    def __broadcast(self, event):
-        for listener in self.__listeners:
-            listener(event)
-            
-    """
-    GETTERS
-    """
-    def get_grid(self):
-        return self.grid.get_grid()
-    
+        self.__grid_size = size
+        self.__grid = Grid(size)
+
     def get_grid_size(self):
-        return self.grid.get_grid_size()
-        
-class Model_Event:
-    def __init__(self, message):
-        self.message = message    
+        return self.__grid_size
     
+    def get_grid(self):
+        return self.__grid.get_borderless_grid()
