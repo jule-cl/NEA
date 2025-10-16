@@ -5,9 +5,10 @@ from itertools import product
 from random import randint
 import word_funcs
 from crossword_layout_gen import Crossword_layout_gen
+from app_settings import *
 
-EMPTY_CELL = 0
-BLOCKED_CELL = 1
+EMPTY_CELL = ""
+BLOCKED_CELL = BLOCKED_CELL
 
 class Grid:
     def __init__(self, grid_size):
@@ -20,7 +21,7 @@ class Grid:
         any letter means the cell has that character
         
         grid system is top-left 0/0, row then column
-        there IS a border so the actual grid goes from 1/1 to s/s
+        there IS NO a border
         """
         self.__grid = []
         self.empty_grid()
@@ -38,13 +39,9 @@ class Grid:
         self.__word_list_across = {}
         self.__word_list_down = {}
         self.__update_word_lists()
-        
-    """
-    METHODS
-    """
+
     def empty_grid(self):
-        self.__grid = [[BLOCKED_CELL]*(self.__GRID_SIZE+2) if row == 0 or row == self.__GRID_SIZE+1
-                       else [BLOCKED_CELL]+[EMPTY_CELL]*self.__GRID_SIZE+[BLOCKED_CELL] for row in range(self.__GRID_SIZE+2)]
+        self.__grid = [[EMPTY_CELL]*self.__GRID_SIZE for row in range(self.__GRID_SIZE+2)]
         
     def clear_grid(self):
         newGrid = [[EMPTY_CELL if cell != BLOCKED_CELL else BLOCKED_CELL for cell in row] for row in self.__grid]
@@ -97,35 +94,10 @@ class Grid:
                     
                 self.__word_list_down[index+1] = word   
         
+    # TODO
     def __get_constraints(self):
         self.__word_list_across
-        
-    # TODO buggy
-    def __change_cell(self, row, col, new_char):
-        ## check if the parameters are valid
-        # coordinate check
-        if not (0 <= row < self.__GRID_SIZE and 0 <= col < self.__GRID_SIZE): raise Exception("coordinates out of bounds")
-        # character check
-        if not (len(new_char)==1 and (new_char.isalpha() or new_char == EMPTY_CELL or new_char == BLOCKED_CELL)): 
-            raise Exception("not valid character")
-        
-        # get old character
-        old_char = self.__grid[row][col]
-        # update
-        self.__grid[row][col] = new_char.upper() 
-        
-        # update numbered cells only if blocked cell added / removed
-        if new_char == BLOCKED_CELL or old_char == BLOCKED_CELL: self.__update_numbered_cells()
-        # update word lists no matter what
-        self.__update_word_lists()
-    
-    # shouldn't be used
-    def toggle_blocked_cell(self, row, col):
-        if self.__grid[row][col] == BLOCKED_CELL: self.change_cell(row, col, EMPTY_CELL); return 1
-        if self.__grid[row][col] == EMPTY_CELL: self.change_cell(row, col, BLOCKED_CELL); return 1
-        
-        raise Exception("something exists in this cell")
-        
+
     # clear means no letters
     def __is_grid_clear(self):
         for row in self.__grid:
@@ -148,26 +120,39 @@ class Grid:
             if not word_funcs.is_valid_word(down_word): return False
         return True
         
-    def generate_layout(self, symmetry=2, ratio=3, longest_word=13):
+    def generate_layout(self, symmetry=2, ratio=3, longest_word=13, seed=None):
         if not self.__is_grid_empty(): raise Exception("The grid isn't empty")
         
         layout = Crossword_layout_gen(self.__GRID_SIZE, symmetry, ratio, longest_word)
-        self.__grid = layout.generate_layout()
+        self.__grid = layout.generate_layout(seed)
         
         self.__update_numbered_cells()
 
+    def get_grid(self):
+        return self.__grid
 
-    '''
-    DEBUGGING METHODS
-    '''
-    def get_borderless_grid(self):
-        final_grid = [row[1:-1] for row in self.__grid[1:-1]]
-        return final_grid
-    
+    def is_cell_corner(self, cell):
+        return self.is_cell_in_word(cell, 'A') and self.is_cell_in_word(cell, 'D')
+
+    def is_cell_in_word(self, cell, dir):
+        row, col = cell
+        if self.__grid[row][col] == BLOCKED_CELL: return False
+        # across check
+        if dir == 'A':
+            if col != 0 and self.__grid[row][col-1] != BLOCKED_CELL: return True
+            if col != self.__GRID_SIZE-1 and self.__grid[row][col+1] != BLOCKED_CELL: return True
+            return False
+        # down check
+        if dir == 'D':
+            if row != 0 and self.__grid[row-1][col] != BLOCKED_CELL: return True
+            if row != self.__GRID_SIZE-1 and self.__grid[row+1][col] != BLOCKED_CELL: return True
+            return False
+        raise Exception("direction invalid")
+
     def print_grid(self):
         row_delim = '+-'*(self.__GRID_SIZE)+'+'
         output = row_delim+'\n'
-        output += ('\n'+row_delim+'\n').join(['|'.join(['']+['#' if c else '.' for c in row]+['']) for row in self.get_borderless_grid()])
+        output += ('\n'+row_delim+'\n').join(['|'.join(['']+['.' if c==EMPTY_CELL else c for c in row]+['']) for row in self.get_borderless_grid()])
         output += '\n'+row_delim
         print(output)
         
@@ -184,14 +169,6 @@ class Grid:
         output_string += '\n'.join([f"{number} down: {word}" for number, word in sorted_down])
 
         print(output_string)
-       
-    # TODO don't use this 
-    def randomise_letters(self):
-        from random import randint
-        from string import ascii_uppercase
-        for i in range(self.__GRID_SIZE):
-            for j in range(self.__GRID_SIZE):
-                self.__change_cell(i, j, ascii_uppercase[randint(0, 25)])
 
         
 if __name__ == '__main__':

@@ -7,8 +7,8 @@ from copy import deepcopy
 from collections import deque
 from bitboard import Bitboard
 
-EMPTY_CELL = 0
-BLOCKED_CELL = 1
+EMPTY_CELL = ""
+BLOCKED_CELL = "#"
 
 O_DIRECTIONS = [(1, 0), (-1, 0), (0, 1), (0, -1)]
 
@@ -111,7 +111,7 @@ class Crossword_layout_gen:
             if not self.__grid_valid():
                 self.__flip_cell_sym(t_row, t_col)
                 
-        return self.__grid
+        return [row[1:-1] for row in self.__grid[1:-1]]
            
     def __grid_valid(self):
         return self.__two_letter_word_check() and self.__connectivity_check() \

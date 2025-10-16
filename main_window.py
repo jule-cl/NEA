@@ -1,11 +1,13 @@
-from PyQt5.QtWidgets import QMainWindow, QStackedWidget
+from PyQt6.QtWidgets import QMainWindow, QStackedWidget
 from screens import *
+from app_settings import *
 
 class Main_Window(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Crossword Generator")
-        self.setGeometry(100, 100, 800, 600)
+        self.setFixedSize(WINDOW_W, WINDOW_H)
+        # self.setMinimumSize(800, 600)
 
         self.stack = QStackedWidget()
         self.setCentralWidget(self.stack)
