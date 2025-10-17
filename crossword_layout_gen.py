@@ -64,16 +64,7 @@ class Crossword_layout_gen:
             
         for t_row, t_col in to_flip:
             self.__flip_cell(t_row, t_col)
-  
-    # should never be used, too inefficient
-    def __update_bitboard(self):
-        new_cells = []
-        for row in range(self.__GRID_SIZE):
-            for col in range(self.__GRID_SIZE):
-                if self.__grid[row][col] == BLOCKED_CELL: new_cells.append((row, col))
-                
-        self.__grid_bitboard = Bitboard(new_cells, self.__GRID_SIZE+2)
-           
+
     # TODO, still tweaking
     def generate_layout(self, seed=None):
         from random import randint

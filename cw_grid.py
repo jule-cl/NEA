@@ -11,7 +11,7 @@ EMPTY_CELL = ""
 BLOCKED_CELL = BLOCKED_CELL
 
 class Grid:
-    def __init__(self, grid_size):
+    def __init__(self, grid_size, symmetry):
         self.__GRID_SIZE = grid_size
         
         """
@@ -21,24 +21,18 @@ class Grid:
         any letter means the cell has that character
         
         grid system is top-left 0/0, row then column
-        there IS NO a border
+        there IS NO border
         """
         self.__grid = []
         self.empty_grid()
         
+        self.__symmetry = symmetry
+        
         # elements are tuples that take the form 
         # (row, col, direction)
         # direction is 'AD', 'A', or 'D'
-        # 0-indexed
         self.__numbered_cells = []
         self.__update_numbered_cells()
-        
-        # each key-value pair is in the form 
-        # numbered cell: string
-        # standard crossword indexing
-        self.__word_list_across = {}
-        self.__word_list_down = {}
-        self.__update_word_lists()
 
     def empty_grid(self):
         self.__grid = [[EMPTY_CELL]*self.__GRID_SIZE for row in range(self.__GRID_SIZE+2)]
@@ -48,8 +42,6 @@ class Grid:
         self.__grid = deepcopy(newGrid)
         
     # use this method when initialising or a blocked cell is added / removed
-    # this does NOT update the word lists
-    # done to save time, no need to change this everytime a letter is changed
     def __update_numbered_cells(self):
         self.__numbered_cells = []
         for row, col in product(range(self.__GRID_SIZE), repeat=2):
@@ -66,70 +58,44 @@ class Grid:
             
             # add to list if exists
             if direction: self.__numbered_cells.append((row, col, direction))
-        
-    # use this method when a character is changed (no matter blocked or letter)
-    # this uses the numbered cells, but does NOT update it
-    # if using this after a blocked cell change, make sure to update numbered cells
-    def __update_word_lists(self):
-        self.__word_list_across = {}
-        self.__word_list_down = {}
-        
-        for index, (row, col, direction) in enumerate(self.__numbered_cells):
-            # across
-            if 'A' in direction:
-                word = ''
-                col_pointer = col
-                while col_pointer != self.__GRID_SIZE and (next_char := self.__grid[row][col_pointer]) != BLOCKED_CELL:
-                    word += str(next_char)
-                    col_pointer += 1
-                    
-                self.__word_list_across[index+1] = word 
-            # down
-            if 'D' in direction:
-                word = ''
-                row_pointer = row
-                while row_pointer != self.__GRID_SIZE and (next_char := self.__grid[row_pointer][col]) != BLOCKED_CELL:
-                    word += str(next_char)
-                    row_pointer += 1
-                    
-                self.__word_list_down[index+1] = word   
-        
-    # TODO
-    def __get_constraints(self):
-        self.__word_list_across
 
-    # clear means no letters
-    def __is_grid_clear(self):
-        for row in self.__grid:
-            for cell in row:
-                if cell != BLOCKED_CELL and cell != EMPTY_CELL: return False
-        return True
-    
-    # empty means no letters + no blocked cells
-    def __is_grid_empty(self):
-        for row in self.__grid[1:-1]:
-            for cell in row[1:-1]:
-                if cell != EMPTY_CELL: return False
-        return True
+    def toggle_blocked(self, row, col):
+        self.__flip_blocked(row, col)
+        target = self.__grid[row][col]
+        
+        if self.__symmetry == 2:
+            self.__flip_blocked(self.__GRID_SIZE-1-row, self.__GRID_SIZE-1-col, target)
+            
+        if self.__symmetry == 4:
+            self.__flip_blocked(self.__GRID_SIZE-1-row, self.__GRID_SIZE-1-col, target)
+            self.__flip_blocked(col, self.__GRID_SIZE-1-row, target)
+            self.__flip_blocked(self.__GRID_SIZE-1-col, row, target)
+        
+        self.__update_numbered_cells()
+        
+    # only one cell
+    def __flip_blocked(self, row, col, target=None):
+        if target == None:
+            if self.__grid[row][col] == EMPTY_CELL: self.__grid[row][col] = BLOCKED_CELL
+            elif self.__grid[row][col] == BLOCKED_CELL: self.__grid[row][col] = EMPTY_CELL
+        else:
+            self.__grid[row][col] = target
 
-    # checks if ALL the words in the grid are valid and completely filled
-    def check_grid_words_validity(self):
-        for across_word in self.__word_list_across.values():
-            if not word_funcs.is_valid_word(across_word): return False
-        for down_word in self.__word_list_down.values():
-            if not word_funcs.is_valid_word(down_word): return False
-        return True
+    def generate_layout(self, ratio=3, longest_word=13, seed=None):
+        # if not self.__is_grid_empty(): raise Exception("The grid isn't empty")
         
-    def generate_layout(self, symmetry=2, ratio=3, longest_word=13, seed=None):
-        if not self.__is_grid_empty(): raise Exception("The grid isn't empty")
-        
-        layout = Crossword_layout_gen(self.__GRID_SIZE, symmetry, ratio, longest_word)
+        layout = Crossword_layout_gen(self.__GRID_SIZE, self.__symmetry, ratio, longest_word)
         self.__grid = layout.generate_layout(seed)
         
         self.__update_numbered_cells()
 
     def get_grid(self):
         return self.__grid
+
+    def set_grid(self, grid):
+        if len(grid) != self.__GRID_SIZE: raise Exception("something's wrong")
+        self.__grid = grid
+        self.__update_numbered_cells()
 
     def is_cell_corner(self, cell):
         return self.is_cell_in_word(cell, 'A') and self.is_cell_in_word(cell, 'D')
@@ -148,28 +114,14 @@ class Grid:
             if row != self.__GRID_SIZE-1 and self.__grid[row+1][col] != BLOCKED_CELL: return True
             return False
         raise Exception("direction invalid")
-
-    def print_grid(self):
-        row_delim = '+-'*(self.__GRID_SIZE)+'+'
-        output = row_delim+'\n'
-        output += ('\n'+row_delim+'\n').join(['|'.join(['']+['.' if c==EMPTY_CELL else c for c in row]+['']) for row in self.get_borderless_grid()])
-        output += '\n'+row_delim
-        print(output)
         
-    def print_numbered_cells(self):
-        print(self.__numbered_cells)
-    
-    def print_word_lists(self):
-        output_string = ""
-        # across
-        sorted_across = sorted(list(self.__word_list_across.items()), key=lambda kv_pair:kv_pair[0])
-        output_string += '\n'.join([f"{number} across: {word}" for number, word in sorted_across])+'\n'
-        # down
-        sorted_down = sorted(list(self.__word_list_down.items()), key=lambda kv_pair:kv_pair[0])
-        output_string += '\n'.join([f"{number} down: {word}" for number, word in sorted_down])
-
-        print(output_string)
-
+    def change_symmetry(self, new_sym):
+        if new_sym not in [1, 2, 4]: raise Exception("this symmetry not allowed")
+        self.__symmetry = new_sym
+        
+    def get_numbered_cells(self):
+        return self.__numbered_cells
+        
         
 if __name__ == '__main__':
     

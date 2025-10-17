@@ -3,14 +3,13 @@
 from app_settings import *
 
 class CW_Model:
-    def __init__(self, size):
+    def __init__(self, grid_size):
         from cw_grid import Grid
         
-        self.__grid_size = size
-        self.__grid = Grid(size)
-        
-        self.__grid.generate_layout(ratio=3.6, seed=3)
-        
+        self.__grid_size = grid_size
+        self.__symmetry = 2
+        self.__grid = Grid(self.__grid_size, self.__symmetry)
+                
         self.__selected_cell = None
         self.__selected_direction = 'A' # A or D, defaults to A
 
@@ -49,6 +48,9 @@ class CW_Model:
         else:
             self.__selected_direction = 'A'
 
+    def toggle_blocked(self, row, col):
+        self.__grid.toggle_blocked(row, col)
+
     def get_selected_cell(self):
         return self.__selected_cell
 
@@ -77,3 +79,14 @@ class CW_Model:
     
     def get_grid(self):
         return self.__grid.get_grid()
+    
+    def set_grid(self, grid):
+        if len(grid) != self.__grid_size: raise Exception("something's wrong")
+        self.__grid.set_grid(grid)
+    
+    def get_numbered_cells(self):
+        return self.__grid.get_numbered_cells()
+    
+    def generate_layout(self, ratio=3.6, seed=3):
+        self.__grid.generate_layout(ratio=3.6, seed=3)
+        

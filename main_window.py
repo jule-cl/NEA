@@ -8,39 +8,59 @@ class Main_Window(QMainWindow):
         self.setWindowTitle("Crossword Generator")
         self.setFixedSize(WINDOW_W, WINDOW_H)
         # self.setMinimumSize(800, 600)
+        self.setStyleSheet(f"background-color: {Theme.BACKGROUND};")
 
         self.stack = QStackedWidget()
         self.setCentralWidget(self.stack)
 
         # Create all pages
-        self.title_screen = Title_Screen(self.show_grid_size_screen)
-        self.grid_size_screen = Grid_Size_Screen(self.show_crossword_screen)
+        self.title_screen = Title_Screen(self.goto_grid_size_screen)
+        self.grid_size_screen = Grid_Size_Screen(self.goto_layout_screen)
 
         # Add to stack
         self.stack.addWidget(self.title_screen)
         self.stack.addWidget(self.grid_size_screen)
 
-    def show_grid_size_screen(self):
+    def goto_grid_size_screen(self):
         self.stack.setCurrentWidget(self.grid_size_screen)
 
-    def show_crossword_screen(self, size):
-        self.crossword_screen = Crossword_Screen(size, self.close_crossword_screen)
-        self.stack.addWidget(self.crossword_screen)
-        self.stack.setCurrentWidget(self.crossword_screen)
-
-    def close_crossword_screen(self):
-        # back to title
-        self.show_title_screen()
+    def goto_layout_screen(self, size):
+        self.layout_screen = Layout_Screen(size, lambda: self.back_to_title("layout"), self.goto_clues_screen)
+        self.stack.addWidget(self.layout_screen)
+        self.stack.setCurrentWidget(self.layout_screen)
         
-        # delete crossword screen from stack
-        index = self.stack.indexOf(self.crossword_screen)
+    def goto_clues_screen(self, grid_size, grid):
+        self.__close_layout_screen()
+        self.clues_screen = Clues_Screen(grid_size, grid, lambda: self.back_to_title("clues"))
+        self.stack.addWidget(self.clues_screen)
+        self.stack.setCurrentWidget(self.clues_screen)
+
+    def back_to_title(self, current_page):
+        self.show_title_screen()
+        if current_page == "layout":
+            self.__close_layout_screen()
+        if current_page == "clues":
+            self.__close_clues_screen()
+        
+    def __close_layout_screen(self):
+        index = self.stack.indexOf(self.layout_screen)
         try:
             widget = self.stack.widget(index)
             self.stack.removeWidget(widget)
             widget.deleteLater()
             self.crossword = None
-        except IndexError:
-            raise Exception("crossword screen doesn't exist")
-
+        finally:
+            pass
+            
+    def __close_clues_screen(self):
+        index = self.stack.indexOf(self.clues_screen)
+        try:
+            widget = self.stack.widget(index)
+            self.stack.removeWidget(widget)
+            widget.deleteLater()
+            self.crossword = None
+        finally:
+            pass
+        
     def show_title_screen(self):
         self.stack.setCurrentWidget(self.title_screen)

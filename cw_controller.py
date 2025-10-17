@@ -1,17 +1,25 @@
 # cw_controller.py
 
 from PyQt6.QtCore import QObject, Qt
+from app_settings import *
 
 class CW_Controller(QObject):
-    def __init__(self, model, view):
+    def __init__(self, model, view, editing_mode):
         super().__init__()
         self.model = model
         self.view = view
+        
+        self.editing_mode = editing_mode
+        self.view.draw(self.editing_mode)
 
     def handle_mouse_clicked(self, scene_pos):
         row, col = self.view.rect_at(scene_pos)
         self.model.change_selection(row, col)
-        self.view.draw()
+        
+        if self.editing_mode == CW_MODE.LAYOUT and row != -1 and col != -1:
+            self.model.toggle_blocked(row, col)
+            
+        self.draw()
         
     def handle_key_pressed(self, key):
         # arrows keys, for moving the selected cell
@@ -34,4 +42,7 @@ class CW_Controller(QObject):
         
         if dr==0: self.model.change_selection(new_row, new_col, "A")
         elif dc==0: self.model.change_selection(new_row, new_col, "D")
-        self.view.draw()
+        self.draw()
+        
+    def draw(self):
+        self.view.draw(self.editing_mode)
