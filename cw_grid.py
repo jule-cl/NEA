@@ -4,16 +4,14 @@ from copy import deepcopy
 from itertools import product
 from random import randint
 import word_funcs
-from crossword_layout_gen import Crossword_layout_gen
+from crossword_layout import Crossword_Layout
 from app_settings import *
 
 EMPTY_CELL = ""
 BLOCKED_CELL = BLOCKED_CELL
 
 class Grid:
-    def __init__(self, grid_size, symmetry):
-        self.__GRID_SIZE = grid_size
-        
+    def __init__(self, grid_size):
         """
         initialise grid:
         BLOCKED_CELL means cell is blocked
@@ -23,10 +21,10 @@ class Grid:
         grid system is top-left 0/0, row then column
         there IS NO border
         """
+        self.__GRID_SIZE = grid_size
         self.__grid = []
+        self.__layout = Crossword_Layout(self.__GRID_SIZE)
         self.empty_grid()
-        
-        self.__symmetry = symmetry
         
         # elements are tuples that take the form 
         # (row, col, direction)
@@ -36,6 +34,7 @@ class Grid:
 
     def empty_grid(self):
         self.__grid = [[EMPTY_CELL]*self.__GRID_SIZE for row in range(self.__GRID_SIZE+2)]
+        self.__layout.empty_grid()
         
     def clear_grid(self):
         newGrid = [[EMPTY_CELL if cell != BLOCKED_CELL else BLOCKED_CELL for cell in row] for row in self.__grid]
@@ -59,14 +58,14 @@ class Grid:
             # add to list if exists
             if direction: self.__numbered_cells.append((row, col, direction))
 
-    def toggle_blocked(self, row, col):
+    def toggle_blocked(self, row, col, sym):
         self.__flip_blocked(row, col)
         target = self.__grid[row][col]
         
-        if self.__symmetry == 2:
+        if sym == 2:
             self.__flip_blocked(self.__GRID_SIZE-1-row, self.__GRID_SIZE-1-col, target)
             
-        if self.__symmetry == 4:
+        if sym == 4:
             self.__flip_blocked(self.__GRID_SIZE-1-row, self.__GRID_SIZE-1-col, target)
             self.__flip_blocked(col, self.__GRID_SIZE-1-row, target)
             self.__flip_blocked(self.__GRID_SIZE-1-col, row, target)
@@ -81,12 +80,9 @@ class Grid:
         else:
             self.__grid[row][col] = target
 
-    def generate_layout(self, ratio=3, longest_word=13, seed=None):
+    def generate_layout(self, symmetry=2, ratio=3.2, longest_word=13, seed=None):
         # if not self.__is_grid_empty(): raise Exception("The grid isn't empty")
-        
-        layout = Crossword_layout_gen(self.__GRID_SIZE, self.__symmetry, ratio, longest_word)
-        self.__grid = layout.generate_layout(seed)
-        
+        self.__grid = self.__layout.generate_layout(symmetry, ratio, longest_word, seed)
         self.__update_numbered_cells()
 
     def get_grid(self):
@@ -95,6 +91,7 @@ class Grid:
     def set_grid(self, grid):
         if len(grid) != self.__GRID_SIZE: raise Exception("something's wrong")
         self.__grid = grid
+        self.__layout.set_grid(grid)
         self.__update_numbered_cells()
 
     def is_cell_corner(self, cell):
@@ -115,20 +112,17 @@ class Grid:
             return False
         raise Exception("direction invalid")
         
-    def change_symmetry(self, new_sym):
-        if new_sym not in [1, 2, 4]: raise Exception("this symmetry not allowed")
-        self.__symmetry = new_sym
-        
     def get_numbered_cells(self):
         return self.__numbered_cells
         
+    def print_grid(self):
+        print('\n'.join(['|'.join([' ' if not c else c for c in row]) for row in self.__grid]))
         
 if __name__ == '__main__':
     
-    test_grid = Grid(9)
+    test_grid = Grid(9, 2)
     
-    test_grid.generate_layout(ratio=3.2)
+    test_grid.generate_layout(ratio=3.6, seed=3)
 
     test_grid.print_grid()
-    test_grid.print_numbered_cells()
 

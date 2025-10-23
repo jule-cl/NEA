@@ -7,14 +7,15 @@ class CW_Model:
         from cw_grid import Grid
         
         self.__grid_size = grid_size
-        self.__symmetry = 2
-        self.__grid = Grid(self.__grid_size, self.__symmetry)
+        self.__grid = Grid(self.__grid_size)
+        
+        self.__symmetry = 2 # defaults to 2-fold
                 
         self.__selected_cell = None
         self.__selected_direction = 'A' # A or D, defaults to A
 
-    def change_selection(self, new_r, new_c, new_dir='A'):        
-        # check if clicked away, (-1, -1)
+    def change_selection(self, new_r, new_c):        
+        # case if deselect everything (-1, -1)
         if new_r == new_c == -1: 
             self.__selected_cell = None
             self.__selected_direction = 'A'
@@ -27,12 +28,11 @@ class CW_Model:
         elif (new_r, new_c) in self.get_cells_in_selected_word():
             self.__selected_cell = (new_r, new_c)
         
-        # if new selection is corner, defaults to across, unless came from the same down word
+        # if new selection is corner, keep same direction
         elif self.__grid.is_cell_corner((new_r, new_c)):
             self.__selected_cell = (new_r, new_c)
-            self.__selected_direction = new_dir
             
-        # defaults direction to across if possible
+        # only one direction
         else: 
             self.__selected_cell = (new_r, new_c)
             if self.__grid.is_cell_in_word(self.__selected_cell, 'A'): 
@@ -45,11 +45,11 @@ class CW_Model:
     def __flip_selected_direction(self):
         if self.__selected_direction == 'A': 
             self.__selected_direction = 'D'
-        else:
+        elif self.__selected_direction == 'D':
             self.__selected_direction = 'A'
 
     def toggle_blocked(self, row, col):
-        self.__grid.toggle_blocked(row, col)
+        self.__grid.toggle_blocked(row, col, self.__symmetry)
 
     def get_selected_cell(self):
         return self.__selected_cell
@@ -87,6 +87,6 @@ class CW_Model:
     def get_numbered_cells(self):
         return self.__grid.get_numbered_cells()
     
-    def generate_layout(self, ratio=3.6, seed=3):
-        self.__grid.generate_layout(ratio=3.6, seed=3)
+    def generate_layout(self, symmetry=2, ratio=3.6, seed=3):
+        self.__grid.generate_layout(symmetry, ratio, seed)
         

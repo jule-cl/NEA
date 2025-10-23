@@ -1,13 +1,13 @@
 # app_info.py
 
-GRID_SIZES = [9, 11, 13]
+GRID_SIZES = [9, 15, 21]
 
 # dimensions
 WINDOW_W = 800
 WINDOW_H = 600
 GRID_DIM = 500
 
-
+EMPTY_CELL = ''
 BLOCKED_CELL = '#'
 
 IMAGE_PATHS = ["images/pic_a.png", "images/pic_b.png", "images/pic_c.png"]

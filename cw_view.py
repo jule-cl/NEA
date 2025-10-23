@@ -16,17 +16,17 @@ class CW_View(QGraphicsView):
 
     def __init__(self, model):
         super().__init__()
-        self.widget_width = int(WINDOW_W*2/3)
-        self.widget_height = int(WINDOW_H*4/5)
-        self.setFixedWidth(self.widget_width)
-        self.setFixedHeight(self.widget_height)
+        self.__widget_width = int(WINDOW_W*2/3)
+        self.__widget_height = int(WINDOW_H*4/5)
+        self.setFixedWidth(self.__widget_width)
+        self.setFixedHeight(self.__widget_height)
         
         self.model = model
         
         self.grid_size = self.model.get_grid_size()
-        self.cell_size = int(self.widget_width*BUFFER/self.grid_size)
-        self.grid_left = (self.widget_width - self.grid_size * self.cell_size ) / 2
-        self.grid_top = (self.widget_height - self.grid_size * self.cell_size ) / 2
+        self.cell_size = int(self.__widget_width*BUFFER/self.grid_size)
+        self.grid_left = (self.__widget_width - self.grid_size * self.cell_size ) / 2
+        self.grid_top = (self.__widget_height - self.grid_size * self.cell_size ) / 2
         
         self.scene = QGraphicsScene()
         self.setScene(self.scene)

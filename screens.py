@@ -101,7 +101,7 @@ class Layout_Screen(QWidget):
         self.cw_model = CW_Model(size)
         self.cw_view = CW_View(self.cw_model)
         self.cw_controller = CW_Controller(self.cw_model, self.cw_view, CW_MODE.LAYOUT)
-        self.cw_model.generate_layout()
+        self.cw_model.generate_layout(seed=3)
         self.cw_view.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.cw_controller.draw()
         

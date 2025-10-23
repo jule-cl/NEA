@@ -12,29 +12,13 @@ BLOCKED_CELL = "#"
 
 O_DIRECTIONS = [(1, 0), (-1, 0), (0, 1), (0, -1)]
 
-class Crossword_layout_gen:
+class Crossword_Layout:
     
-    def __init__(self, size, symmetry=2, ratio=3.2, longest_word=13):
+    def __init__(self, size):
         # grid is at (1, 1) top-left, goes to (s, s) bottom-right, and (row, column)
         # boundary is r=0, r=s+1, c=0, c=s+1
-        
-        self.__grid = [[BLOCKED_CELL]*(size+2) if row == 0 or row == size+1
-                       else [BLOCKED_CELL]+[EMPTY_CELL]*size+[BLOCKED_CELL] for row in range(size+2)]
         self.__GRID_SIZE = size
-        
-        if not self.__is_grid_empty(): raise Exception("the grid must be empty")
-
-        if symmetry != 2 and symmetry != 4: raise Exception("grid symmetry is wrong")
-        self.__SYMMETRY = symmetry
-        self.__RATIO = ratio
-        self.__LONGEST_WORD = longest_word
-        
-        self.__blocked_cells = []
-        for i in range(self.__GRID_SIZE+1):
-            self.__blocked_cells += [(i, 0), (0, i+1), (self.__GRID_SIZE+1, i), (i+1, self.__GRID_SIZE+1)]
-        self.__empty_cells = [(r, c) for r, c in product(range(1, self.__GRID_SIZE+1), repeat=2)]
-            
-        self.__grid_bitboard = Bitboard(deepcopy(self.__blocked_cells), self.__GRID_SIZE+2)
+        self.empty_grid()
                 
     # empty means no letters
     def __is_grid_empty(self):
@@ -49,24 +33,50 @@ class Crossword_layout_gen:
             self.__grid_bitboard.remove_cell(row, col)
             self.__blocked_cells.remove((row, col))
             self.__empty_cells.append((row, col))
+            self.__number_of_blocked_cells -= 1
             
         elif self.__grid[row][col] == EMPTY_CELL:
             self.__grid[row][col] = BLOCKED_CELL
             self.__grid_bitboard.add_cell(row, col)
             self.__empty_cells.remove((row, col))
             self.__blocked_cells.append((row, col))
+            self.__number_of_blocked_cells += 1
             
-    def __flip_cell_sym(self, row, col):
-        to_flip = set([(row, col), (self.__GRID_SIZE+1-row, self.__GRID_SIZE+1-col)])
-        if self.__SYMMETRY == 4:
+    def __flip_cell_sym(self, row, col, sym):
+        to_flip = set([(row, col)])
+        if sym == 2:
+            to_flip.add((self.__GRID_SIZE+1-row, self.__GRID_SIZE+1-col))
+        if sym == 4:
+            to_flip.add((self.__GRID_SIZE+1-row, self.__GRID_SIZE+1-col))
             to_flip.add((col, self.__GRID_SIZE+1-row))
             to_flip.add((self.__GRID_SIZE+1-col, row))
             
         for t_row, t_col in to_flip:
             self.__flip_cell(t_row, t_col)
 
+    def empty_grid(self):
+        self.__grid = [[BLOCKED_CELL]*(self.__GRID_SIZE+2) if row == 0 or row == self.__GRID_SIZE+1
+                       else [BLOCKED_CELL]+[EMPTY_CELL]*self.__GRID_SIZE+[BLOCKED_CELL] for row in range(self.__GRID_SIZE+2)]
+
+        self.__blocked_cells = []
+        for i in range(self.__GRID_SIZE+1):
+            self.__blocked_cells += [(i, 0), (0, i+1), (self.__GRID_SIZE+1, i), (i+1, self.__GRID_SIZE+1)]
+        self.__empty_cells = [(r, c) for r, c in product(range(1, self.__GRID_SIZE+1), repeat=2)]
+        self.__grid_bitboard = Bitboard(deepcopy(self.__blocked_cells), self.__GRID_SIZE+2)
+        self.__number_of_blocked_cells = 0
+
+    def set_grid(self, grid):
+        self.empty_grid()
+        for row_num, row in enumerate(grid):
+            for col_num, cell in enumerate(row):
+                if cell == BLOCKED_CELL: 
+                    self.__flip_cell(row_num, col_num)
+
+    """
+    GENERATION RELATED
+    """
     # TODO, still tweaking
-    def generate_layout(self, seed=None):
+    def generate_layout(self, symmetry=2, ratio=3.6, longest_word=13, seed=None):
         from random import randint
         if seed == None: seed = randint(1, 2^16)
         
@@ -79,28 +89,34 @@ class Crossword_layout_gen:
             for col in range(col_offset, self.__GRID_SIZE+1, 2):
                 self.__flip_cell(row, col)
                 
-        target_blocked = (self.__GRID_SIZE**2) / self.__RATIO
+        # this can't always be done ..?
+        target_blocked = (self.__GRID_SIZE**2) / ratio
         
-        if self.__GRID_SIZE > self.__LONGEST_WORD:
+        if self.__GRID_SIZE > longest_word:
             for t_row in range((row_offset-1)^1+1, self.__GRID_SIZE//2+1, 2):
                 t_col = randint(int(self.__GRID_SIZE/3), int(self.__GRID_SIZE*2/3))
-                self.__flip_cell_sym(t_row, t_col)
+                self.__flip_cell_sym(t_row, t_col, symmetry)
                 
                 offset = 0
                 while not self.__grid_valid():
-                    self.__flip_cell_sym((t_row+offset-1)%self.__GRID_SIZE+1, t_col)
+                    self.__flip_cell_sym((t_row+offset-1)%self.__GRID_SIZE+1, t_col, symmetry)
                     offset += 1
-                    self.__flip_cell_sym((t_row+offset-1)%self.__GRID_SIZE+1, t_col)
+                    self.__flip_cell_sym((t_row+offset-1)%self.__GRID_SIZE+1, t_col, symmetry)
                
-        while len(self.__blocked_cells)-4*(self.__GRID_SIZE+1) <= target_blocked:
+        # while not enough blocked cells, keep adding more
+        banned_cells = []
+        attempts = 0
+        while self.__number_of_blocked_cells-4*(self.__GRID_SIZE+1) <= target_blocked and attempts < 20: # limit attempts?
+            # pick random cell
             t_row, t_col = randint(1, self.__GRID_SIZE), randint(1, self.__GRID_SIZE)
-            
-            if self.__grid[t_row][t_col] == BLOCKED_CELL: continue
-
-            self.__flip_cell_sym(t_row, t_col)
+            attempts += 1
+            if self.__grid[t_row][t_col] == BLOCKED_CELL: continue # skip if aready blocked
+            if (t_row, t_col) in banned_cells: continue # skip if banned (already failed)
+            self.__flip_cell_sym(t_row, t_col, symmetry)
             
             if not self.__grid_valid():
-                self.__flip_cell_sym(t_row, t_col)
+                self.__flip_cell_sym(t_row, t_col, symmetry)
+                banned_cells.append((t_row, t_col))
                 
         return [row[1:-1] for row in self.__grid[1:-1]]
            
@@ -199,7 +215,10 @@ class Crossword_layout_gen:
                     return False
                 
         return True
-      
+    
+    """
+    GETTERS
+    """ 
     def get_borderless_grid(self):
         final_grid = [row[1:-1] for row in self.__grid[1:-1]]
         return final_grid
@@ -230,8 +249,8 @@ class Crossword_layout_gen:
         
         
 if __name__ == '__main__':
-    ## empty/block ratio of 3.2 looks nice
-    filler = Crossword_layout_gen(size=9, ratio=3.2)
+    ## empty/block ratio of 3.6 is fine
+    filler = Crossword_Layout(size=9)
     
     filler.generate_layout()
     
