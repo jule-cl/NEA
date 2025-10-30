@@ -8,6 +8,43 @@ from cw_controller import CW_Controller
 from clickable_image import Clickable_Image
 from app_settings import *
 
+class Widget_Positioner:
+    @staticmethod
+    def center(widget, x, y):
+        widget.move(x - widget.width() // 2, y - widget.height() // 2)
+    
+    @staticmethod
+    def top_left(widget, x, y):
+        widget.move(x, y)
+    
+    @staticmethod
+    def top_right(widget, x, y):
+        widget.move(x - widget.width(), y)
+    
+    @staticmethod
+    def top_center(widget, x, y):
+        widget.move(x - widget.width() // 2, y)
+    
+    @staticmethod
+    def bottom_left(widget, x, y):
+        widget.move(x, y - widget.height())
+    
+    @staticmethod
+    def bottom_right(widget, x, y):
+        widget.move(x - widget.width(), y - widget.height())
+    
+    @staticmethod
+    def bottom_center(widget, x, y):
+        widget.move(x - widget.width() // 2, y - widget.height())
+    
+    @staticmethod
+    def middle_left(widget, x, y):
+        widget.move(x, y - widget.height() // 2)
+    
+    @staticmethod
+    def middle_right(widget, x, y):
+        widget.move(x - widget.width(), y - widget.height() // 2)
+
 class Title_Screen(QWidget):
     def __init__(self, go_to_grid_size):
         super().__init__()
@@ -74,12 +111,12 @@ class Grid_Size_Screen(QWidget):
         layout.addStretch()
         self.setLayout(layout)
     
-    def on_image_clicked(self, data):
-        # deselect all
+    def deselect_all(self):
         for label in self.grid_size_labels.values():
             label.set_selected(False)
-        
-        # select clicked one
+    
+    def on_image_clicked(self, data):
+        self.deselect_all()
         self.grid_size_labels[data].set_selected(True)
         self.selected_grid_size = data
         self.continue_button.setEnabled(True)
@@ -91,40 +128,35 @@ class Layout_Screen(QWidget):
     def __init__(self, size, back_to_title, go_next):
         super().__init__()
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
-        layout = QVBoxLayout()
-
-        title = QLabel("EDITING LAYOUT")
-        title.setStyleSheet(f"color: {Theme.FOREGROUND}; font-size: 15;")
-        layout.addWidget(title)
-
-        # MVC setup
-        self.cw_model = CW_Model(size)
-        self.cw_view = CW_View(self.cw_model)
-        self.cw_controller = CW_Controller(self.cw_model, self.cw_view, CW_MODE.LAYOUT)
-        self.cw_model.generate_layout(seed=3)
-        self.cw_view.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.cw_controller.draw()
         
+        # MVC setup
+        self.cw_model = CW_Model(size) # model 
+        self.cw_view = CW_View(self.cw_model) # view -> reference to model
+        self.cw_view.setParent(self)
+        self.cw_view.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.cw_controller = CW_Controller(self.cw_model, self.cw_view, CW_MODE.LAYOUT) # controller -> reference to both
         self.mouse_clicked.connect(self.cw_controller.handle_mouse_clicked)
         self.key_pressed.connect(self.cw_controller.handle_key_pressed)
-
-        layout.addWidget(self.cw_view)
-
-        navigation_layout = QHBoxLayout()
+        
+        # title
+        title = QLabel("EDITING LAYOUT", self)
+        title.setStyleSheet(f"color: {Theme.FOREGROUND}; font-size: 24px;")
         # leave
-        leave_button = QPushButton("Back to Menu")
+        leave_button = QPushButton("Back to Menu", self)
         leave_button.setStyleSheet(f"background-color: {Theme.FOREGROUND}; color: {Theme.BACKGROUND}")
         leave_button.clicked.connect(back_to_title)
-        navigation_layout.addWidget(leave_button)
         # next
-        next_button = QPushButton("Go next")
+        next_button = QPushButton("Go next", self)
         next_button.setStyleSheet(f"background-color: {Theme.FOREGROUND}; color: {Theme.BACKGROUND}")
         next_button.clicked.connect(lambda: go_next(self.cw_model.get_grid_size(), self.cw_model.get_grid()))
-        navigation_layout.addWidget(next_button)
-        # add to overall layout
-        layout.addLayout(navigation_layout)
-
-        self.setLayout(layout)
+        
+        self.cw_controller.draw() # puts crossword grid onto view
+        self.show() # the elements don't have a width/height before they are on the screen, so show() first
+        # move stuff
+        Widget_Positioner.middle_left(self.cw_view, WIDGET_PADDING, WINDOW_H//2)
+        Widget_Positioner.top_center(title, WINDOW_W//2, WIDGET_PADDING)
+        Widget_Positioner.bottom_left(leave_button, WIDGET_PADDING, WINDOW_H-WIDGET_PADDING)
+        Widget_Positioner.bottom_right(next_button, WINDOW_W-WIDGET_PADDING, WINDOW_H-WIDGET_PADDING)
         
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
@@ -143,32 +175,31 @@ class Clues_Screen(QWidget):
     def __init__(self, grid_size, grid, go_back):
         super().__init__()
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
-        layout = QVBoxLayout()
-
-        title = QLabel("EDITING CLUES")
-        title.setStyleSheet(f"color: {Theme.FOREGROUND}; font-size: 15;")
-        layout.addWidget(title)
 
         # MVC setup
         self.cw_model = CW_Model(grid_size)
-        self.cw_view = CW_View(self.cw_model)
-        self.cw_controller = CW_Controller(self.cw_model, self.cw_view, CW_MODE.CLUES)
         self.cw_model.set_grid(grid)
+        self.cw_view = CW_View(self.cw_model)
+        self.cw_view.setParent(self)
         self.cw_view.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.cw_controller.draw()
-        
+        self.cw_controller = CW_Controller(self.cw_model, self.cw_view, CW_MODE.CLUES)
         self.mouse_clicked.connect(self.cw_controller.handle_mouse_clicked)
         self.key_pressed.connect(self.cw_controller.handle_key_pressed)
-
-        layout.addWidget(self.cw_view)
         
+        # title
+        title = QLabel("EDITING CLUES", self)
+        title.setStyleSheet(f"color: {Theme.FOREGROUND}; font-size: 24px")
         # leave
-        leave_button = QPushButton("Back to Menu")
+        leave_button = QPushButton("Back to Menu", self)
         leave_button.setStyleSheet(f"background-color: {Theme.FOREGROUND}; color: {Theme.BACKGROUND}")
         leave_button.clicked.connect(go_back)
-        layout.addWidget(leave_button)
 
-        self.setLayout(layout)
+        self.cw_controller.draw()
+        self.show()
+        # move stuff
+        Widget_Positioner.middle_left(self.cw_view, WIDGET_PADDING, WINDOW_H//2)
+        Widget_Positioner.top_center(title, WINDOW_W//2, WIDGET_PADDING)
+        Widget_Positioner.bottom_left(leave_button, WIDGET_PADDING, WINDOW_H-WIDGET_PADDING)
         
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:

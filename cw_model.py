@@ -14,7 +14,7 @@ class CW_Model:
         self.__selected_cell = None
         self.__selected_direction = 'A' # A or D, defaults to A
 
-    def change_selection(self, new_r, new_c):        
+    def change_selection(self, new_r, new_c, direction=None):        
         # case if deselect everything (-1, -1)
         if new_r == new_c == -1: 
             self.__selected_cell = None
@@ -31,6 +31,7 @@ class CW_Model:
         # if new selection is corner, keep same direction
         elif self.__grid.is_cell_corner((new_r, new_c)):
             self.__selected_cell = (new_r, new_c)
+            if direction: self.__selected_direction = direction
             
         # only one direction
         else: 

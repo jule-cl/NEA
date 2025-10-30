@@ -33,7 +33,7 @@ class Grid:
         self.__update_numbered_cells()
 
     def empty_grid(self):
-        self.__grid = [[EMPTY_CELL]*self.__GRID_SIZE for row in range(self.__GRID_SIZE+2)]
+        self.__grid = [[EMPTY_CELL]*self.__GRID_SIZE for _ in range(self.__GRID_SIZE)]
         self.__layout.empty_grid()
         
     def clear_grid(self):

@@ -23,6 +23,7 @@ class Main_Window(QMainWindow):
 
     def goto_grid_size_screen(self):
         self.stack.setCurrentWidget(self.grid_size_screen)
+        self.grid_size_screen.deselect_all()
 
     def goto_layout_screen(self, size):
         self.layout_screen = Layout_Screen(size, lambda: self.back_to_title("layout"), self.goto_clues_screen)
