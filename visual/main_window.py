@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import QMainWindow, QStackedWidget
-from screens import *
+from visual.screens import *
 from app_settings import *
 
 class Main_Window(QMainWindow):

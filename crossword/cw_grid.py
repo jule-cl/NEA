@@ -3,8 +3,8 @@
 from copy import deepcopy
 from itertools import product
 from random import randint
-import word_funcs
-from crossword_layout import Crossword_Layout
+import crossword.algorithms.word_funcs as word_funcs
+from crossword.algorithms.cw_layout_filler import Crossword_Layout
 from app_settings import *
 
 EMPTY_CELL = ""

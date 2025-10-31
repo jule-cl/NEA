@@ -1,10 +1,10 @@
 # cw_model.py
 
+from crossword.cw_grid import Grid
 from app_settings import *
 
 class CW_Model:
     def __init__(self, grid_size):
-        from cw_grid import Grid
         
         self.__grid_size = grid_size
         self.__grid = Grid(self.__grid_size)

@@ -11,7 +11,7 @@ WIDGET_PADDING = min(WINDOW_W, WINDOW_H)//60
 EMPTY_CELL = ''
 BLOCKED_CELL = '#'
 
-IMAGE_PATHS = ["images/pic_a.png", "images/pic_b.png", "images/pic_c.png"]
+IMAGE_PATHS = ["visual/images/pic_a.png", "visual/images/pic_b.png", "visual/images/pic_c.png"]
 
 class CW_MODE:
     LAYOUT = "layout"

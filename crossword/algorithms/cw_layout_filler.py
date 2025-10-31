@@ -5,7 +5,7 @@
 from itertools import product
 from copy import deepcopy
 from collections import deque
-from bitboard import Bitboard
+from data_structs.bitboard import Bitboard
 
 EMPTY_CELL = ""
 BLOCKED_CELL = "#"

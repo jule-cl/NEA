@@ -16,10 +16,10 @@ TODO:
 the process of choosing a candidate can be reworked to get better words
 """
 
-from copy import deepcopy
 from random import choice
-from word_funcs import get_words_that_match, get_word_score
-from math import inf
+from crossword.algorithms.word_funcs import get_word_score
+from crossword.cw_clue import CW_Clue
+from data_structs.pqueue import PQueue
 from app_settings import *
       
 class Auto_Fill:
@@ -57,7 +57,7 @@ class Auto_Fill:
                         t_col += 1
                         
                     if word_length >= 3:
-                        new_clue = Clue(row, col, 'A', word_length, [(row, col+i) for i in range(word_length)], self)
+                        new_clue = CW_Clue(row, col, 'A', word_length, [(row, col+i) for i in range(word_length)], self)
                         self.__all_clues.append(new_clue)
                         for i in range(word_length):
                             cell_clue_directions[row][col+i].append(new_clue)
@@ -74,7 +74,7 @@ class Auto_Fill:
                         t_row += 1
                         
                     if word_length >= 3:
-                        new_clue = Clue(row, col, 'D', word_length, [(row+i, col) for i in range(word_length)], self)
+                        new_clue = CW_Clue(row, col, 'D', word_length, [(row+i, col) for i in range(word_length)], self)
                         self.__all_clues.append(new_clue)
                         for i in range(word_length):
                             cell_clue_directions[row+i][col].append(new_clue)
@@ -206,113 +206,9 @@ class Auto_Fill:
     def print_grid(self):
         print('\n'.join([' '.join([c if c else '?' for c in row]) for row in grid])+'\n')
 
-# min heap (to get priority)
-class PQueue:
-    def __init__(self):
-        self.queue = []
-    
-    def __get_children_indicies(self, i):
-        left = i*2+1
-        if left >= len(self.queue): left = None
-        right = i*2+2
-        if right >= len(self.queue): right = None
-        return (left, right)
-    
-    def __get_parent_index(self, i):
-        return (i-1)//2
-    
-    def __get_node_at_index(self, i):
-        return self.queue[i] if i else None
-    
-    def get_root(self):
-        if len(self.queue) == 0: return None
-        return self.queue[0]
-    
-    def pop_node(self, node):
-        current_index = self.queue.index(node)
-        
-        # if thing to pop is already at the end
-        if current_index == len(self.queue)-1:
-            return self.queue.pop()
-        
-        self.queue[current_index] = self.queue.pop()
-        
-        while True:
-            index_l, index_r = self.__get_children_indicies(current_index)
-            left, right = self.__get_node_at_index(index_l), self.__get_node_at_index(index_r)
-            
-            if left and left.score < self.queue[current_index].score:
-                self.queue[current_index], self.queue[index_l] = self.queue[index_l], self.queue[current_index]
-                current_index = index_l
-                continue
-                
-            if right and right.score < self.queue[current_index].score:
-                self.queue[current_index], self.queue[index_r] = self.queue[index_r], self.queue[current_index]
-                current_index = index_r
-                continue
-            
-            break
-        return node
-
-    def pop_index(self, index):
-        if index >= len(self.queue): return None
-        return self.pop_node(self.queue[index])
-
-    def insert_node(self, node):
-        self.queue.append(node)
-        
-        current_index = len(self.queue)-1
-        while True:
-            index_p = self.__get_parent_index(current_index)
-            parent = self.__get_node_at_index(index_p)
-            
-            if parent and parent.score > self.queue[current_index].score:
-                self.queue[current_index], self.queue[index_p] = self.queue[index_p], self.queue[current_index]
-                current_index = index_p
-                continue
-            
-            break
-
-    def has_node(self, node):
-        return node in self.queue
-
-class Clue:
-    def __init__(self, row, col, direction, length, cells, parent_grid):
-        self.row = row
-        self.col = col
-        self.direction = direction
-        self.length = length 
-        self.parent_grid = parent_grid
-        
-        self.cells = cells
-        self.intersections = []
-        self.intersection_positions = []
-        
-        self.failed_patterns = []
-        
-        self.score = inf
-        
-    def __get_regex(self):
-        return ''.join(['*' if (c:=self.parent_grid.grid[row][col])==EMPTY_CELL else c for (row, col) in self.cells])
-    
-    def get_possible_words(self):
-        regex = self.__get_regex()
-        return sorted([w.upper() for w in get_words_that_match(regex)], key=lambda w:get_word_score(w), reverse=True)
-    
-    def get_possible_patterns(self):
-        # find all possible patterns
-        candidates = list(set([''.join([checked[i] for i in self.intersection_positions]) for checked in self.get_possible_words()]))
-        # filter out used patterns and ones that fail
-        candidates = list(filter(lambda p: p not in self.parent_grid.used_patterns and p not in self.failed_patterns, candidates))
-        return candidates
-    
-    # based off patterns rather than words
-    def update_score(self):
-        self.score = len(self.get_possible_patterns())
-        
 if __name__ == '__main__':
     import time
-    from crossword_layout import Crossword_Layout
+    from crossword.algorithms.cw_layout_filler import Crossword_Layout
     
     layout = Crossword_Layout(size=9)
     

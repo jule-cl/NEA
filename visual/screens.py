@@ -2,10 +2,10 @@
 
 from PyQt6.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QLabel, QPushButton, QRadioButton, QButtonGroup, QGraphicsRectItem
 from PyQt6.QtCore import Qt, pyqtSignal, QPointF
-from cw_model import CW_Model
-from cw_view import CW_View
-from cw_controller import CW_Controller
-from clickable_image import Clickable_Image
+from crossword.cw_model import CW_Model
+from crossword.cw_view import CW_View
+from crossword.cw_controller import CW_Controller
+from visual.clickable_image import Clickable_Image
 from app_settings import *
 
 class Widget_Positioner:
