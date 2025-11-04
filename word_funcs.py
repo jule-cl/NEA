@@ -9,6 +9,7 @@ LETTER_FREQUENCIES = [12.02, 9.10, 8.12, 7.68, 7.31, 6.95, 6.28, 6.02, 5.92, 4.3
                       2.61, 2.30, 2.11, 2.09, 2.03, 1.82, 1.49, 1.11, 0.69, 0.17, 0.11, 0.10, 0.07]
 # https://pi.math.cornell.edu/~mec/2003-2004/cryptography/subs/frequencies.html
 LETTER_SCORE = {l:s for l, s in zip(LETTERS_BY_FREQUENCY, LETTER_FREQUENCIES)}
+WORD_SCORE = {word: i for i, word in enumerate(ALL_WORDS)}
 
 def is_valid_word(word):
     if word > ALL_WORDS[-1]: return False
@@ -47,6 +48,9 @@ def get_words_that_match(regex, word_list=ALL_WORDS):
 def get_word_score(word):
     return sum([LETTER_SCORE[c.upper()]for c in word])/len(word)
         
+# def get_word_score(word):
+#     return WORD_SCORE[word.lower()]
+
 if __name__ == '__main__':
     # print(is_valid_word("syzygy"))
     print(len(get_words_that_match("***")))

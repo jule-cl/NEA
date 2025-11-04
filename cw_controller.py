@@ -44,5 +44,14 @@ class CW_Controller(QObject):
         elif dc==0: self.model.change_selection(new_row, new_col, "D")
         self.draw()
         
+    def generate_layout(self):
+        if not self.model.is_grid_empty(): return False
+        self.model.generate_layout()
+        self.draw()
+        
+    def empty_grid(self):
+        self.model.empty_grid()
+        self.draw()
+        
     def draw(self):
         self.view.draw(self.editing_mode)

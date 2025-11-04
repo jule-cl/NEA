@@ -1,5 +1,12 @@
+# main_window.py
+
 from PyQt6.QtWidgets import QMainWindow, QStackedWidget
-from visual.screens import *
+
+from title_screen import Title_Screen
+from creation_screen import Creation_Screen
+from layout_screen import Layout_Screen
+from clues_screen import Clues_Screen
+
 from app_settings import *
 
 class Main_Window(QMainWindow):
@@ -15,7 +22,7 @@ class Main_Window(QMainWindow):
 
         # Create all pages
         self.title_screen = Title_Screen(self.goto_grid_size_screen)
-        self.grid_size_screen = Grid_Size_Screen(self.goto_layout_screen)
+        self.grid_size_screen = Creation_Screen(self.goto_layout_screen)
 
         # Add to stack
         self.stack.addWidget(self.title_screen)

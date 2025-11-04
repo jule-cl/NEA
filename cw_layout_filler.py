@@ -5,7 +5,7 @@
 from itertools import product
 from copy import deepcopy
 from collections import deque
-from data_structs.bitboard import Bitboard
+from bitboard import Bitboard
 
 EMPTY_CELL = ""
 BLOCKED_CELL = "#"
@@ -14,11 +14,13 @@ O_DIRECTIONS = [(1, 0), (-1, 0), (0, 1), (0, -1)]
 
 class Crossword_Layout:
     
-    def __init__(self, size):
+    def __init__(self, grid=None, size=None):
         # grid is at (1, 1) top-left, goes to (s, s) bottom-right, and (row, column)
         # boundary is r=0, r=s+1, c=0, c=s+1
-        self.__GRID_SIZE = size
+        if size: self.__GRID_SIZE = size
+        if grid: self.__GRID_SIZE = len(grid)
         self.empty_grid()
+        if grid: self.set_grid(grid)
                 
     # empty means no letters
     def __is_grid_empty(self):
@@ -138,6 +140,8 @@ class Crossword_Layout:
                 if (new_row, new_col) in to_visit: continue
                 if self.__grid[new_row][new_col] == BLOCKED_CELL: continue
                 
+                if not (1 <= new_row <= self.__GRID_SIZE and 1 <= new_col <= self.__GRID_SIZE): continue
+                
                 to_visit.append((new_row, new_col))
                 
             visited.append(current)
@@ -250,7 +254,7 @@ class Crossword_Layout:
         
 if __name__ == '__main__':
     ## empty/block ratio of 3.6 is fine
-    filler = Crossword_Layout(size=9)
+    filler = Crossword_Layout(size=15)
     
     filler.generate_layout()
     

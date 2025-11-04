@@ -1,6 +1,6 @@
 # cw_model.py
 
-from crossword.cw_grid import Grid
+from cw_grid import Grid
 from app_settings import *
 
 class CW_Model:
@@ -87,6 +87,12 @@ class CW_Model:
     
     def get_numbered_cells(self):
         return self.__grid.get_numbered_cells()
+    
+    def empty_grid(self):
+        self.__grid.empty_grid()
+    
+    def is_grid_empty(self):
+        return self.__grid.is_grid_empty()
     
     def generate_layout(self, symmetry=2, ratio=3.6, seed=3):
         self.__grid.generate_layout(symmetry, ratio, seed)

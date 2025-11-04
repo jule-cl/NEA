@@ -17,9 +17,10 @@ the process of choosing a candidate can be reworked to get better words
 """
 
 from random import choice
-from crossword.algorithms.word_funcs import get_word_score
-from crossword.cw_clue import CW_Clue
-from data_structs.pqueue import PQueue
+
+from word_funcs import get_word_score
+from cw_clue import CW_Clue
+from pqueue import PQueue
 from app_settings import *
       
 class Auto_Fill:
@@ -100,7 +101,7 @@ class Auto_Fill:
             clue.intersection_positions = [i for i, cell in enumerate(clue.cells) if self.__to_cell_number(cell[0], cell[1]) in self.__corner_checked.keys()]
                         
     def fill(self, constraint=10):
-        self.used_patterns = set()
+        self.used_words = set()
         self.filled_clues = []
         
         self.ordered_clues = PQueue()
@@ -119,23 +120,20 @@ class Auto_Fill:
             
             self.current_clue = self.ordered_clues.pop_index(0)
                   
-            candidates = self.current_clue.get_possible_patterns()
+            candidates = self.current_clue.get_possible_words()
             candidates = sorted(candidates, key=lambda x: get_word_score(x), reverse=True)[:constraint]
-            # choose a pattern
-            selected_pattern = choice(candidates)
+            # choose a word
+            selected_word = choice(candidates)
         
             # attempt to place pattern
-            self.__place_pattern(self.current_clue, selected_pattern)
+            self.__place_word(self.current_clue, selected_word)
             self.filled_clues.append(self.current_clue)
-            self.used_patterns.add(selected_pattern)
+            self.used_words.add(selected_word)
             self.__update_priority()
                 
-            print(len(self.filled_clues), len(self.ordered_clues.queue))
-            self.print_grid()
+            # print(len(self.filled_clues), len(self.ordered_clues.queue))
+            # self.print_grid()
 
-        for clue in self.__all_clues:
-            candidates = clue.get_possible_words()
-            self.__place_word(clue, choice(candidates))
         return True
     
     def __find_conflict_source(self, failed_clue):
@@ -144,10 +142,10 @@ class Auto_Fill:
             
     def __remove_clue(self, clue_to_remove):
         # remove word from grid and allow pattern to be used again
-        removed_pattern = self.__remove_pattern(clue_to_remove)
-        self.used_patterns.remove(removed_pattern)
+        removed_word = self.__remove_word(clue_to_remove)
+        self.used_words.remove(removed_word)
         # record the failed pattern, not letting to be used in this clue
-        clue_to_remove.failed_patterns.append(removed_pattern)
+        clue_to_remove.failed_words.append(removed_word)
         
         # put clue back in and update priority
         self.filled_clues.remove(clue_to_remove)
@@ -166,20 +164,11 @@ class Auto_Fill:
             if cell_num in self.__corner_checked.keys():
                 self.__corner_checked[cell_num][clue.direction] = True
             
-    def __place_pattern(self, clue, pattern):
-        for index, pos in enumerate(clue.intersection_positions):
-            row, col = clue.cells[pos]
-            # place it 
-            self.grid[row][col] = pattern[index]
-            
-            cell_num = self.__to_cell_number(row, col)
-            self.__corner_checked[cell_num][clue.direction] = True
-               
-    def __remove_pattern(self, clue):
-        pattern = ""
+    def __remove_word(self, clue):
+        word = ""
         for row, col in clue.cells:
-            if self.grid[row][col] == EMPTY_CELL: continue
-            pattern += self.grid[row][col]
+            if self.grid[row][col] == EMPTY_CELL: raise Exception("clue not filled")
+            word += self.grid[row][col]
             
             cell_num = self.__to_cell_number(row, col)
             other_dir = 'A' if clue.direction == 'D' else 'D'
@@ -191,7 +180,7 @@ class Auto_Fill:
             
 
             
-        return pattern
+        return word
                 
     def __update_priority(self):
         for clue in self.__all_clues:
@@ -208,7 +197,7 @@ class Auto_Fill:
 
 if __name__ == '__main__':
     import time
-    from crossword.algorithms.cw_layout_filler import Crossword_Layout
+    from cw_layout_filler import Crossword_Layout
     
     layout = Crossword_Layout(size=9)
     
@@ -220,7 +209,7 @@ if __name__ == '__main__':
     filler = Auto_Fill(grid)
     
     start = time.time()
-    print(filler.fill(constraint=5))
+    filler.fill(constraint=5)
     end = time.time()
     
     filler.print_grid()

@@ -2,9 +2,7 @@
 
 from copy import deepcopy
 from itertools import product
-from random import randint
-import crossword.algorithms.word_funcs as word_funcs
-from crossword.algorithms.cw_layout_filler import Crossword_Layout
+from cw_layout_filler import Crossword_Layout
 from app_settings import *
 
 EMPTY_CELL = ""
@@ -23,7 +21,6 @@ class Grid:
         """
         self.__GRID_SIZE = grid_size
         self.__grid = []
-        self.__layout = Crossword_Layout(self.__GRID_SIZE)
         self.empty_grid()
         
         # elements are tuples that take the form 
@@ -34,11 +31,17 @@ class Grid:
 
     def empty_grid(self):
         self.__grid = [[EMPTY_CELL]*self.__GRID_SIZE for _ in range(self.__GRID_SIZE)]
-        self.__layout.empty_grid()
+        self.__update_numbered_cells()
         
     def clear_grid(self):
         newGrid = [[EMPTY_CELL if cell != BLOCKED_CELL else BLOCKED_CELL for cell in row] for row in self.__grid]
         self.__grid = deepcopy(newGrid)
+        
+    def is_grid_empty(self):
+        for row in self.__grid:
+            for cell in row:
+                if cell != EMPTY_CELL: return False
+        return True
         
     # use this method when initialising or a blocked cell is added / removed
     def __update_numbered_cells(self):
@@ -81,8 +84,8 @@ class Grid:
             self.__grid[row][col] = target
 
     def generate_layout(self, symmetry=2, ratio=3.2, longest_word=13, seed=None):
-        # if not self.__is_grid_empty(): raise Exception("The grid isn't empty")
-        self.__grid = self.__layout.generate_layout(symmetry, ratio, longest_word, seed)
+        if not self.is_grid_empty(): raise Exception("The grid isn't empty")
+        self.__grid = Crossword_Layout(self.__grid).generate_layout(symmetry, ratio, longest_word, seed)
         self.__update_numbered_cells()
 
     def get_grid(self):
@@ -120,7 +123,7 @@ class Grid:
         
 if __name__ == '__main__':
     
-    test_grid = Grid(9, 2)
+    test_grid = Grid(9)
     
     test_grid.generate_layout(ratio=3.6, seed=3)
 

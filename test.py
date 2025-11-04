@@ -1,251 +1,220 @@
-import random
-from collections import defaultdict
+# crossword_filler.py
 
-class AutoFill:
-    def __init__(self, grid, word_list):
-        """
-        grid: 2D list where None = black, '' = empty white
-        word_list: list of words
-        """
+"""
+apparently this is better
+searches through clues and backtracks when fails
+
+algorithm outline:
+order clues to fill by "priority"
+get most "prioritised" clue
+if no possible words fit in that space:
+    get rid of the most recent clue placed that intersects with the clue and try again
+if there are words:
+    pick word (pattern) and place it there
+
+TODO:
+the process of choosing a candidate can be reworked to get better words
+"""
+
+from random import choice
+
+from word_funcs import get_word_score
+from cw_clue import CW_Clue
+from pqueue import PQueue
+from app_settings import *
+      
+class Auto_Fill:
+    def __init__(self, grid):
         self.grid = grid
-        self.rows = len(grid)
-        self.cols = len(grid[0])
+        self.__GRID_SIZE = len(grid)
         
-        # Organize words by length for O(1) lookup
-        self.words_by_length = defaultdict(list)
-        for word in word_list:
-            word = word.upper().strip()
-            if word:
-                self.words_by_length[len(word)].append(word)
+        self.__all_clues = []
+        self.__corner_clues = {}
+        self.__corner_checked = {}
+        self.__update_clues_and_corners()
         
-        # Find all slots
-        self.slots = self._find_slots()
+    def __update_clues_and_corners(self):
+        self.__all_clues = []
+        cell_clue_directions = [[[] for _ in range(self.__GRID_SIZE)] for __ in range(self.__GRID_SIZE)]
         
-        # Track which words we've used
+        for row in range(len(self.grid)):
+            for col in range(len(self.grid)):
+                
+                '''
+                CLUES CHECK
+                '''
+                # blocked
+                if self.grid[row][col] == BLOCKED_CELL: continue
+                
+                # across
+                if col >= self.__GRID_SIZE-2: pass
+                elif self.grid[row][col-1] == BLOCKED_CELL or col == 0: 
+                    # find length of word
+                    word_length = 1
+                    t_col = col + 1
+                    while t_col <= len(self.grid)-1:
+                        if self.grid[row][t_col] == BLOCKED_CELL: break
+                        word_length += 1
+                        t_col += 1
+                        
+                    if word_length >= 3:
+                        new_clue = CW_Clue(row, col, 'A', word_length, [(row, col+i) for i in range(word_length)], self)
+                        self.__all_clues.append(new_clue)
+                        for i in range(word_length):
+                            cell_clue_directions[row][col+i].append(new_clue)
+                        
+                # down
+                if row >= self.__GRID_SIZE-2: pass
+                elif self.grid[row-1][col] == BLOCKED_CELL or row == 0: 
+                    # find length of word
+                    word_length = 1
+                    t_row = row + 1
+                    while t_row <= len(self.grid)-1:
+                        if self.grid[t_row][col] == BLOCKED_CELL: break
+                        word_length += 1
+                        t_row += 1
+                        
+                    if word_length >= 3:
+                        new_clue = CW_Clue(row, col, 'D', word_length, [(row+i, col) for i in range(word_length)], self)
+                        self.__all_clues.append(new_clue)
+                        for i in range(word_length):
+                            cell_clue_directions[row+i][col].append(new_clue)
+
+        # find corner positions, the clues that go through them, and initialise whether they have been filled from either direction
+        for index_r, row in enumerate(cell_clue_directions):
+            for index_c, col in enumerate(row):
+                if len(col) == 2: # both part of across and down
+                    self.__corner_clues[self.__to_cell_number(index_r, index_c)] = (col[0], col[1])
+                    self.__corner_checked[self.__to_cell_number(index_r, index_c)] = {'A':False, 'D':False}
+        
+        # find which clues intersect which clues
+        for clue in self.__all_clues:
+            clue.intersections = []
+            for row, col in clue.cells:
+                cell_num = self.__to_cell_number(row, col)
+                if cell_num in self.__corner_clues.keys():
+                    clue1, clue2 = self.__corner_clues[cell_num]
+                    clue.intersections.append(clue1)
+                    clue.intersections.append(clue2)
+                    
+            # get positions of intersection
+            clue.intersection_positions = [i for i, cell in enumerate(clue.cells) if self.__to_cell_number(cell[0], cell[1]) in self.__corner_checked.keys()]
+                        
+    def fill(self, constraint=10):
         self.used_words = set()
+        self.filled_clues = []
+        self.constraint = constraint
         
-        # Cache for pattern matching
-        self.pattern_cache = {}
-    
-    def _find_slots(self):
-        """Find all horizontal and vertical word slots"""
-        slots = []
-        
-        # Horizontal slots
-        for row in range(self.rows):
-            col = 0
-            while col < self.cols:
-                if self.grid[row][col] is not None:  # Not black
-                    start = col
-                    while col < self.cols and self.grid[row][col] is not None:
-                        col += 1
+        self.ordered_clues = PQueue()
+        for clue in self.__all_clues:
+            clue.update_possible_words(constraint)
+            clue.update_score()
+            self.ordered_clues.insert_node(clue)
+
+        # main search
+        while self.ordered_clues.get_root():
+
+            self.current_clue = self.ordered_clues.pop_index(0)
+            
+            if self.current_clue.current_attempt == constraint or not self.current_clue.possible_words: # no possibilities, so backtrack 
+                if not self.filled_clues: return False # back to first clue, no solutions
+                self.current_clue.current_attempt = 0
+                self.ordered_clues.insert_node(self.current_clue)
+                self.__remove_clue(self.__find_conflict_source(self.current_clue))
                     
-                    length = col - start
-                    if length >= 2:  # Only 2+ letter words
-                        slots.append({
-                            'row': row,
-                            'col': start,
-                            'length': length,
-                            'dir': 'H',
-                            'cells': [(row, start + i) for i in range(length)]
-                        })
-                else:
-                    col += 1
-        
-        # Vertical slots
-        for col in range(self.cols):
-            row = 0
-            while row < self.rows:
-                if self.grid[row][col] is not None:
-                    start = row
-                    while row < self.rows and self.grid[row][col] is not None:
-                        row += 1
-                    
-                    length = row - start
-                    if length >= 2:
-                        slots.append({
-                            'row': start,
-                            'col': col,
-                            'length': length,
-                            'dir': 'V',
-                            'cells': [(start + i, col) for i in range(length)]
-                        })
-                else:
-                    row += 1
-        
-        return slots
-    
-    def fill(self, allow_reuse=False, max_attempts=1):
-        """
-        Fill the grid with words
-        allow_reuse: Can the same word appear multiple times?
-        max_attempts: Try multiple times with different orderings
-        """
-        self.allow_reuse = allow_reuse
-        
-        for attempt in range(max_attempts):
-            # Clear grid
-            for row in range(self.rows):
-                for col in range(self.cols):
-                    if self.grid[row][col] is not None:
-                        self.grid[row][col] = ''
+                continue 
             
-            self.used_words.clear()
-            self.pattern_cache.clear()
-            
-            # Sort slots by constraint (most constrained first)
-            # This is KEY for performance
-            ordered_slots = self._order_slots()
-            
-            if self._backtrack(ordered_slots, 0):
-                return True
-            
-            # Shuffle for next attempt
-            random.shuffle(self.slots)
+            candidates = self.current_clue.possible_words
+            # choose a word
+            selected_word = choice(candidates)
         
-        return False
-    
-    def _order_slots(self):
-        """Order slots by difficulty (most constrained first)"""
-        # Calculate how many possible words each slot has
-        slot_scores = []
-        for slot in self.slots:
-            pattern = self._get_pattern(slot)
-            possible = self._get_matching_words(slot['length'], pattern)
-            slot_scores.append((len(possible), slot))
-        
-        # Sort by fewest options (most constrained first)
-        slot_scores.sort(key=lambda x: x[0])
-        return [slot for _, slot in slot_scores]
-    
-    def _backtrack(self, ordered_slots, slot_idx):
-        """Recursive backtracking"""
-        # Success!
-        if slot_idx >= len(ordered_slots):
-            return True
-        
-        slot = ordered_slots[slot_idx]
-        pattern = self._get_pattern(slot)
-        
-        # Get possible words for this slot
-        candidates = self._get_matching_words(slot['length'], pattern)
-        
-        # No valid words - fail fast
-        if not candidates:
-            return False
-        
-        # Limit candidates to speed up (try most common first)
-        # You can add word frequency scoring here
-        candidates = candidates[:50]  # Try top 50
-        random.shuffle(candidates)  # Randomize for variety
-        
-        # Try each candidate
-        for word in candidates:
-            if not self.allow_reuse and word in self.used_words:
-                continue
-            
-            # Place word
-            self._place_word(slot, word)
-            
-            if not self.allow_reuse:
-                self.used_words.add(word)
-            
-            # Recurse
-            if self._backtrack(ordered_slots, slot_idx + 1):
-                return True
-            
-            # Backtrack
-            self._remove_word(slot)
-            if not self.allow_reuse:
-                self.used_words.remove(word)
-        
-        return False
-    
-    def _get_pattern(self, slot):
-        """Get current pattern (e.g., 'C_T' for partially filled slot)"""
-        pattern = []
-        for r, c in slot['cells']:
-            char = self.grid[r][c]
-            pattern.append(char if char else '.')
-        return ''.join(pattern)
-    
-    def _get_matching_words(self, length, pattern):
-        """Get words matching length and pattern"""
-        # Use cache for repeated patterns
-        cache_key = (length, pattern)
-        if cache_key in self.pattern_cache:
-            return self.pattern_cache[cache_key]
-        
-        candidates = self.words_by_length.get(length, [])
-        
-        # If no pattern constraints, return all
-        if '.' not in pattern:
-            # Pattern is fully specified - exact match only
-            result = [pattern] if pattern in candidates else []
-        else:
-            # Filter by pattern
-            result = [w for w in candidates if self._matches_pattern(w, pattern)]
-        
-        self.pattern_cache[cache_key] = result
-        return result
-    
-    def _matches_pattern(self, word, pattern):
-        """Check if word matches pattern (. = wildcard)"""
-        if len(word) != len(pattern):
-            return False
-        
-        for w_char, p_char in zip(word, pattern):
-            if p_char != '.' and p_char != w_char:
-                return False
-        
+            # attempt to place pattern
+            self.__place_word(self.current_clue, selected_word)
+            self.filled_clues.append(self.current_clue)
+            self.used_words.add(selected_word)
+            self.__update_priority()
+                
+            print(len(self.filled_clues), len(self.ordered_clues.queue))
+            self.print_grid()
+
         return True
     
-    def _place_word(self, slot, word):
-        """Place word in grid"""
-        for i, (r, c) in enumerate(slot['cells']):
-            self.grid[r][c] = word[i]
-    
-    def _remove_word(self, slot):
-        """Remove word from grid (only clear if not crossing)"""
-        for r, c in slot['cells']:
-            # Only clear if no other slot has filled this cell
-            if not self._has_crossing(r, c, slot):
-                self.grid[r][c] = ''
-    
-    def _has_crossing(self, row, col, current_slot):
-        """Check if cell has a crossing word from another slot"""
-        for slot in self.slots:
-            if slot == current_slot:
-                continue
+    def __find_conflict_source(self, failed_clue):
+        for clue in self.filled_clues[::-1]:
+            if set(clue.cells).union(set(failed_clue.cells)): return clue
             
-            if (row, col) in slot['cells']:
-                # Check if this slot has a letter here
-                pattern = self._get_pattern(slot)
-                idx = slot['cells'].index((row, col))
-                if pattern[idx] != '.':
-                    return True
+    def __remove_clue(self, clue_to_remove):
+        # remove word from grid and allow pattern to be used again
+        removed_word = self.__remove_word(clue_to_remove)
+        self.used_words.remove(removed_word)
+        # record the failed pattern, not letting to be used in this clue
+        clue_to_remove.current_attempt += 1
         
-        return False
+        # put clue back in and update priority
+        self.filled_clues.remove(clue_to_remove)
+        self.ordered_clues.insert_node(clue_to_remove)
+        
+        self.__update_priority()
     
-# Load words
-with open('words_alpha.txt', 'r') as f:
-    word_list = [line.strip() for line in f if 2 <= len(line.strip()) <= 15]
+    def __place_word(self, clue, word):
+        for index, (row, col) in enumerate(clue.cells):
+            if self.grid[row][col] not in [word[index], EMPTY_CELL]: raise Exception("something already there")
+                
+            # place it 
+            self.grid[row][col] = word[index]
+            
+            # check if the cell is checked
+            cell_num = self.__to_cell_number(row, col)
+            if cell_num in self.__corner_checked.keys():
+                self.__corner_checked[cell_num][clue.direction] = True
 
-# Create grid (None = black square, '' = empty)
-grid = [
-    ['', '', '', ''],
-    ['', '', '', ''],
-    ['', '', '', ''],
-    ['', '', '', '']
-]
+    def __remove_word(self, clue):
+        word = ""
+        for row, col in clue.cells:
+            if self.grid[row][col] == EMPTY_CELL: raise Exception("clue not filled")
+            word += self.grid[row][col]
+            
+            cell_num = self.__to_cell_number(row, col)
+            other_dir = 'A' if clue.direction == 'D' else 'D'
+            
+            if cell_num in self.__corner_checked.keys():
+                self.__corner_checked[cell_num][clue.direction] = False
+                if self.__corner_checked[cell_num][other_dir]: continue # if the cell was filled from the other direction
+            self.grid[row][col] = EMPTY_CELL
+            
+        return word
+                
+    def __update_priority(self):
+        for clue in self.__all_clues:
+            clue.update_possible_words(self.constraint)
+            clue.update_score()
+            if self.ordered_clues.has_node(clue):
+                self.ordered_clues.pop_node(clue)
+                self.ordered_clues.insert_node(clue)
+                
+    def __to_cell_number(self, r, c):
+        return r * self.__GRID_SIZE + c
 
-# Fill it
-autofill = AutoFill(grid, word_list)
-success = autofill.fill(allow_reuse=False, max_attempts=3)
+    def print_grid(self):
+        print('\n'.join([' '.join([c if c else '?' for c in row]) for row in grid])+'\n')
 
-if success:
-    print("Filled successfully!")
-    for row in grid:
-        print(' '.join(cell if cell else '?' for cell in row))
-else:
-    print("Could not fill grid")
+if __name__ == '__main__':
+    import time
+    from cw_layout_filler import Crossword_Layout
+    
+    layout = Crossword_Layout(size=11)
+    
+    start = time.time()
+    grid = layout.generate_layout(seed=3)
+    end = time.time()
+    print(f'layout gen: {end-start:.2f} s')
+    
+    filler = Auto_Fill(grid)
+    
+    start = time.time()
+    print(filler.fill(constraint=5))
+    end = time.time()
+    
+    filler.print_grid()
+    print(f'Auto fill: {end-start:.2f} s')
+
