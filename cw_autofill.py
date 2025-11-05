@@ -112,7 +112,7 @@ class Auto_Fill:
         # main search
         while self.ordered_clues.get_root():
 
-            if self.ordered_clues.get_root().score == 0: # no possibilities, so backtrack 
+            if self.ordered_clues.get_root().score == 0 or self.ordered_clues.get_root().attempts == constraint: # no possibilities, so backtrack 
                 if not self.filled_clues: return False # back to first clue, no solutions
                 self.__remove_clue(self.__find_conflict_source(self.ordered_clues.get_root()))
                     
@@ -121,15 +121,15 @@ class Auto_Fill:
             self.current_clue = self.ordered_clues.pop_index(0)
                   
             candidates = self.current_clue.get_possible_words()
-            candidates = sorted(candidates, key=lambda x: get_word_score(x), reverse=True)[:constraint]
             # choose a word
-            selected_word = choice(candidates)
+            selected_word = candidates[0]
         
             # attempt to place pattern
             self.__place_word(self.current_clue, selected_word)
             self.filled_clues.append(self.current_clue)
             self.used_words.add(selected_word)
             self.__update_priority()
+            self.current_clue.attempts += 1
                 
             # print(len(self.filled_clues), len(self.ordered_clues.queue))
             # self.print_grid()
@@ -146,6 +146,12 @@ class Auto_Fill:
         self.used_words.remove(removed_word)
         # record the failed pattern, not letting to be used in this clue
         clue_to_remove.failed_words.append(removed_word)
+        
+        # reset attempts for intersecting clues
+        for clue in clue_to_remove.intersections:
+            if self.ordered_clues.has_node(clue):
+                clue.attempts = 0
+                # clue.failed_words = []
         
         # put clue back in and update priority
         self.filled_clues.remove(clue_to_remove)
@@ -199,7 +205,7 @@ if __name__ == '__main__':
     import time
     from cw_layout_filler import Crossword_Layout
     
-    layout = Crossword_Layout(size=9)
+    layout = Crossword_Layout(size=11)
     
     start = time.time()
     grid = layout.generate_layout(seed=3)
@@ -207,6 +213,7 @@ if __name__ == '__main__':
     print(f'layout gen: {end-start:.2f} s')
     
     filler = Auto_Fill(grid)
+    filler.print_grid()
     
     start = time.time()
     filler.fill(constraint=5)

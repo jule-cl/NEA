@@ -45,11 +45,13 @@ def get_words_that_match(regex, word_list=ALL_WORDS):
     
     return candidates
 
-def get_word_score(word):
-    return sum([LETTER_SCORE[c.upper()]for c in word])/len(word)
-        
 # def get_word_score(word):
-#     return WORD_SCORE[word.lower()]
+#     return sum([LETTER_SCORE[c.upper()]for c in word])/len(word)
+        
+@cache
+def get_word_score(word):
+    # word frequency * average letter frequency
+    return WORD_SCORE[word.lower()] * sum([LETTER_SCORE[c.upper()]for c in word])/len(word)
 
 if __name__ == '__main__':
     # print(is_valid_word("syzygy"))
