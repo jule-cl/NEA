@@ -14,21 +14,12 @@ O_DIRECTIONS = [(1, 0), (-1, 0), (0, 1), (0, -1)]
 
 class Crossword_Layout:
     
-    def __init__(self, grid=None, size=None):
+    def __init__(self, size=None):
         # grid is at (1, 1) top-left, goes to (s, s) bottom-right, and (row, column)
         # boundary is r=0, r=s+1, c=0, c=s+1
         if size: self.__GRID_SIZE = size
-        if grid: self.__GRID_SIZE = len(grid)
         self.empty_grid()
-        if grid: self.set_grid(grid)
-                
-    # empty means no letters
-    def __is_grid_empty(self):
-        for row in self.__grid[1:-1]:
-            for cell in row[1:-1]:
-                if cell != EMPTY_CELL: return False
-        return True    
-
+        
     def __flip_cell(self, row, col):
         if self.__grid[row][col] == BLOCKED_CELL:
             self.__grid[row][col] = EMPTY_CELL
@@ -94,16 +85,16 @@ class Crossword_Layout:
         # this can't always be done ..?
         target_blocked = (self.__GRID_SIZE**2) / ratio
         
-        if self.__GRID_SIZE > longest_word:
-            for t_row in range((row_offset-1)^1+1, self.__GRID_SIZE//2+1, 2):
-                t_col = randint(int(self.__GRID_SIZE/3), int(self.__GRID_SIZE*2/3))
-                self.__flip_cell_sym(t_row, t_col, symmetry)
+        # if self.__GRID_SIZE > longest_word:
+        #     for t_row in range((row_offset-1)^1+1, self.__GRID_SIZE//2+1, 2):
+        #         t_col = randint(int(self.__GRID_SIZE/3), int(self.__GRID_SIZE*2/3))
+        #         self.__flip_cell_sym(t_row, t_col, symmetry)
                 
-                offset = 0
-                while not self.__grid_valid():
-                    self.__flip_cell_sym((t_row+offset-1)%self.__GRID_SIZE+1, t_col, symmetry)
-                    offset += 1
-                    self.__flip_cell_sym((t_row+offset-1)%self.__GRID_SIZE+1, t_col, symmetry)
+        #         offset = 0
+        #         while not self.__grid_valid():
+        #             self.__flip_cell_sym((t_row+offset-1)%self.__GRID_SIZE+1, t_col, symmetry)
+        #             offset += 1
+        #             self.__flip_cell_sym((t_row+offset-1)%self.__GRID_SIZE+1, t_col, symmetry)
                
         # while not enough blocked cells, keep adding more
         banned_cells = []
@@ -254,7 +245,7 @@ class Crossword_Layout:
         
 if __name__ == '__main__':
     ## empty/block ratio of 3.6 is fine
-    filler = Crossword_Layout(size=15)
+    filler = Crossword_Layout(size=21)
     
     filler.generate_layout()
     

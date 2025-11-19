@@ -11,6 +11,14 @@ WIDGET_PADDING = min(WINDOW_W, WINDOW_H)//60
 EMPTY_CELL = ''
 BLOCKED_CELL = '#'
 
+# crossword related
+BUFFER = 0.9
+SELECTED_OUTLINE = 0.08
+CLUE_NUMBER_BUFFER = 0.06
+CLUE_NUMBER_SIZE = 0.25
+CLUE_LETTER_SIZE = 0.8
+TEXT_FONT = "Arial"
+
 IMAGE_PATHS = ["images/pic_a.png", "images/pic_b.png", "images/pic_c.png"]
 
 class CW_MODE:

@@ -16,9 +16,6 @@ TODO:
 the process of choosing a candidate can be reworked to get better words
 """
 
-from random import choice
-
-from word_funcs import get_word_score
 from cw_clue import CW_Clue
 from pqueue import PQueue
 from app_settings import *
@@ -89,56 +86,60 @@ class Auto_Fill:
         
         # find which clues intersect which clues
         for clue in self.__all_clues:
-            clue.intersections = []
+            clue.intersections = set()
             for row, col in clue.cells:
                 cell_num = self.__to_cell_number(row, col)
                 if cell_num in self.__corner_clues.keys():
                     clue1, clue2 = self.__corner_clues[cell_num]
-                    clue.intersections.append(clue1)
-                    clue.intersections.append(clue2)
+                    clue.intersections.add(clue1)
+                    clue.intersections.add(clue2)
                     
             # get positions of intersection
             clue.intersection_positions = [i for i, cell in enumerate(clue.cells) if self.__to_cell_number(cell[0], cell[1]) in self.__corner_checked.keys()]
                         
-    def fill(self, constraint=10):
+    def fill(self, constraint=5):
         self.used_words = set()
         self.filled_clues = []
         
-        self.ordered_clues = PQueue()
+        self.clues_to_fill = PQueue()
         for clue in self.__all_clues:
             clue.update_score()
-            self.ordered_clues.insert_node(clue)
+            self.clues_to_fill.insert_node(clue)
 
         # main search
-        while self.ordered_clues.get_root():
+        while self.clues_to_fill.get_root():
 
-            if self.ordered_clues.get_root().score == 0 or self.ordered_clues.get_root().attempts == constraint: # no possibilities, so backtrack 
+            self.current_clue = self.clues_to_fill.get_root()
+
+            if self.current_clue.score == 0 or self.current_clue.attempts == constraint: # no possibilities, so backtrack 
                 if not self.filled_clues: return False # back to first clue, no solutions
-                self.__remove_clue(self.__find_conflict_source(self.ordered_clues.get_root()))
-                    
+                self.__remove_clue(self.__find_conflict_source(self.clues_to_fill.get_root()))
                 continue 
             
-            self.current_clue = self.ordered_clues.pop_index(0)
+            self.current_clue = self.clues_to_fill.pop_index(0)
                   
+            # pick the "best" word
             candidates = self.current_clue.get_possible_words()
-            # choose a word
             selected_word = candidates[0]
         
-            # attempt to place pattern
+            # place word in grid
             self.__place_word(self.current_clue, selected_word)
             self.filled_clues.append(self.current_clue)
             self.used_words.add(selected_word)
-            self.__update_priority()
+            self.__update_priority(self.current_clue)
             self.current_clue.attempts += 1
                 
-            # print(len(self.filled_clues), len(self.ordered_clues.queue))
             # self.print_grid()
+            # input()
 
         return True
     
     def __find_conflict_source(self, failed_clue):
         for clue in self.filled_clues[::-1]:
-            if set(clue.cells).union(set(failed_clue.cells)): return clue
+            if set(clue.cells).intersection(set(failed_clue.cells)): return clue
+            
+        # if no intersection found, return most recent
+        return self.filled_clues[-1] if self.filled_clues else None
             
     def __remove_clue(self, clue_to_remove):
         # remove word from grid and allow pattern to be used again
@@ -149,14 +150,14 @@ class Auto_Fill:
         
         # reset attempts for intersecting clues
         for clue in clue_to_remove.intersections:
-            if self.ordered_clues.has_node(clue):
+            if self.clues_to_fill.has_node(clue):
                 clue.attempts = 0
                 # clue.failed_words = []
         
         # put clue back in and update priority
         self.filled_clues.remove(clue_to_remove)
-        self.ordered_clues.insert_node(clue_to_remove)
-        self.__update_priority()
+        self.clues_to_fill.insert_node(clue_to_remove)
+        self.__update_priority(clue_to_remove)
     
     def __place_word(self, clue, word):
         for index, (row, col) in enumerate(clue.cells):
@@ -188,12 +189,12 @@ class Auto_Fill:
             
         return word
                 
-    def __update_priority(self):
-        for clue in self.__all_clues:
-            clue.update_score()
-            if self.ordered_clues.has_node(clue): 
-                self.ordered_clues.pop_node(clue)
-                self.ordered_clues.insert_node(clue)
+    def __update_priority(self, affected_clue):
+        for clue in affected_clue.intersections:
+            if self.clues_to_fill.has_node(clue): 
+                clue.update_score()
+                self.clues_to_fill.pop_node(clue)
+                self.clues_to_fill.insert_node(clue)
                 
     def __to_cell_number(self, r, c):
         return r * self.__GRID_SIZE + c
@@ -205,10 +206,10 @@ if __name__ == '__main__':
     import time
     from cw_layout_filler import Crossword_Layout
     
-    layout = Crossword_Layout(size=11)
+    layout = Crossword_Layout(size=15)
     
     start = time.time()
-    grid = layout.generate_layout(seed=3)
+    grid = layout.generate_layout()
     end = time.time()
     print(f'layout gen: {end-start:.2f} s')
     

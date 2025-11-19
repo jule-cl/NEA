@@ -1,19 +1,11 @@
 # cw_view.py
 
 from PyQt6.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsRectItem, QGraphicsSimpleTextItem
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtGui import QBrush, QColor, QPen, QFont
 from app_settings import *
 
-BUFFER = 0.9
-SELECTED_OUTLINE = 0.08
-CLUE_NUMBER_BUFFER = 0.06
-CLUE_NUMBER_SIZE = 0.25
-
 class CW_View(QGraphicsView):
-    cell_clicked = pyqtSignal(int, int)
-    move_selected = pyqtSignal(int, int)
-
     def __init__(self, model):
         super().__init__()
         self.__widget_width = int(WINDOW_W*0.6)
@@ -36,56 +28,60 @@ class CW_View(QGraphicsView):
         self.scene.clear()
         self.setStyleSheet(f"background: transparent; border: none;")
         grid = self.model.get_grid()
-        selected = self.model.get_selected_cell()
+        selected_cell = self.model.get_selected_cell()
         selected_word = self.model.get_cells_in_selected_word()
         
         for r in range(self.grid_size):
             for c in range(self.grid_size):
-                if selected == (r, c): continue # do the selected one last, so layering is right
                 # colour of cell
+                colour = Theme.CELL_BASE
                 if grid[r][c] == BLOCKED_CELL: colour = Theme.BLOCKED_CELL
-                elif editing_mode == CW_MODE.CLUES and (r, c) in selected_word: colour = Theme.SELECTED_WORD
-                else: colour = Theme.CELL_BASE
-                
+                elif editing_mode == CW_MODE.CLUES:
+                    if (r, c) == selected_cell: colour = Theme.SELECTED_CELL
+                    elif (r, c) in selected_word: colour = Theme.SELECTED_WORD
+                    
                 x, y = c * self.cell_size + self.grid_left, r * self.cell_size + self.grid_top
+                
+                # draw cell
                 rect = QGraphicsRectItem(x, y, self.cell_size, self.cell_size)
                 rect.setBrush(QBrush(QColor(colour)))
-                rect.setPen(QPen(QColor(Theme.BLOCKED_CELL)))
+                if (r, c) == selected_cell: rect.setPen(QPen(QColor(Theme.HIGHLIGHT), self.cell_size*SELECTED_OUTLINE))
+                else: rect.setPen(QPen(QColor(Theme.BLOCKED_CELL)))
                 rect.setData(0, (r, c))
+                if (r, c) == selected_cell: rect.setZValue(100) # move selected to top
                 self.scene.addItem(rect)
+                
+                # draw letter in cell (if present)
+                if not(grid[r][c] == BLOCKED_CELL or grid[r][c] == EMPTY_CELL): 
+                    letter = QGraphicsSimpleTextItem(grid[r][c].upper())
+                    bounding_rect = letter.boundingRect()
+                    letter.setPos(x + self.cell_size/2 - bounding_rect.width()/2, y + self.cell_size/2 - bounding_rect.height()/2)
+                    letter.setBrush(QColor(Theme.FOREGROUND))
+                    letter.setFont(QFont(TEXT_FONT, int(self.cell_size*CLUE_LETTER_SIZE)))
+                    if (r, c) == selected_cell: letter.setZValue(100) # move selected to top
+                    self.scene.addItem(letter)
 
-        # if there is a selected cell..
-        if selected:
-            r, c = selected
-            # colour of cell
-            if grid[r][c] == BLOCKED_CELL: colour = Theme.BLOCKED_CELL
-            elif editing_mode == CW_MODE.CLUES: colour = Theme.SELECTED_CELL
-            else: colour = Theme.CELL_BASE
-            
-            x, y = c * self.cell_size + self.grid_left, r * self.cell_size + self.grid_top
-            rect = QGraphicsRectItem(x, y, self.cell_size, self.cell_size)
-            rect.setBrush(QBrush(QColor(colour)))
-            rect.setPen(QPen(QColor(Theme.HIGHLIGHT), self.cell_size*SELECTED_OUTLINE))
-            rect.setData(0, selected)
-            self.scene.addItem(rect)
-            
         # draw clue numbers
         numbered_cells = self.model.get_numbered_cells()
-        for index, (row, col, direction) in enumerate(numbered_cells):
+        for index, (row, col, _) in enumerate(numbered_cells):
             x, y = (col+CLUE_NUMBER_BUFFER) * self.cell_size + self.grid_left, (row+CLUE_NUMBER_BUFFER) * self.cell_size + self.grid_top
             
-            text_item = QGraphicsSimpleTextItem(str(index+1))
-            text_item.setPos(x, y)
-            text_item.setBrush(QColor("black"))  # Text color
-            text_item.setFont(QFont("Arial", max(8, int(self.cell_size*CLUE_NUMBER_SIZE))))
+            number = QGraphicsSimpleTextItem(str(index+1))
+            number.setPos(x, y)
+            number.setBrush(QColor(Theme.FOREGROUND))
+            number.setFont(QFont(TEXT_FONT, max(8, int(self.cell_size*CLUE_NUMBER_SIZE))))
 
-            self.scene.addItem(text_item)
+            if (row, col) == selected_cell: 
+                number.setZValue(100)
+            self.scene.addItem(number)
             
 
     def rect_at(self, pos):
-        item = self.itemAt(pos.toPoint())
-        if isinstance(item, QGraphicsRectItem):
-            return item.data(0)
+        item_list = self.items(pos.toPoint()) # need to get all items, in case clicked on the number
+        if not item_list: return (-1, -1)
+        
+        if isinstance(item_list[-1], QGraphicsRectItem):
+            return item_list[-1].data(0)
         
         return (-1, -1)
             

@@ -1,9 +1,11 @@
 # cw_controller.py
 
-from PyQt6.QtCore import QObject, Qt
+from PyQt6.QtCore import QObject, Qt, pyqtSignal
 from app_settings import *
 
 class CW_Controller(QObject):
+    update_info = pyqtSignal()
+    
     def __init__(self, model, view, editing_mode):
         super().__init__()
         self.model = model
@@ -31,6 +33,9 @@ class CW_Controller(QObject):
             self.__move_selected_cell(0, -1)
         elif key == Qt.Key.Key_Right:
             self.__move_selected_cell(0, 1)
+            
+        if self.editing_mode == CW_MODE.CLUES:
+            self.__type_letter(key)
         
     def __move_selected_cell(self, dr, dc):
         selected = self.model.get_selected_cell()
@@ -44,6 +49,11 @@ class CW_Controller(QObject):
         elif dc==0: self.model.change_selection(new_row, new_col, "D")
         self.draw()
         
+    def __type_letter(self, key):
+        if Qt.Key.Key_A <= key <= Qt.Key.Key_Z:
+            self.model.enter_letter(chr(key))
+        self.draw()
+    
     def generate_layout(self):
         if not self.model.is_grid_empty(): return False
         self.model.generate_layout()
@@ -55,3 +65,4 @@ class CW_Controller(QObject):
         
     def draw(self):
         self.view.draw(self.editing_mode)
+        self.update_info.emit()

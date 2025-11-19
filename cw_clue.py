@@ -11,10 +11,9 @@ class CW_Clue:
         self.parent_grid = parent_grid
         
         self.cells = cells
-        self.intersections = []
+        self.intersections = set()
         self.intersection_positions = []
         
-        self.possible_words = []
         self.attempts = 0
         self.failed_words = []
         
@@ -25,20 +24,14 @@ class CW_Clue:
     
     def get_possible_words(self):
         regex = self.__get_regex()
-        candidates = sorted([w.upper() for w in get_words_that_match(regex)], key=lambda w:get_word_score(w), reverse=True)
+        candidates = sorted([w.upper() for w in get_words_that_match(regex)], key=lambda w:get_word_score(w))
         candidates = list(filter(lambda w: w not in self.parent_grid.used_words, candidates)) # filter out used words
         candidates = list(filter(lambda w: w not in self.failed_words, candidates)) # filter out failed words
         return candidates
-    
-    # def update_possible_words(self, constraint):
-    #     regex = self.__get_regex()
-    #     self.possible_words = sorted([w.upper() for w in get_words_that_match(regex)], key=lambda w:get_word_score(w), reverse=True)
-    #     self.possible_words = list(filter(lambda w: w not in self.parent_grid.used_words, self.possible_words)) # filter out used words
-    #     self.possible_words = self.possible_words[:constraint]
     
     # based off patterns rather than words
     def update_score(self):
         # uses word score to calculate, and gives a lower score to longer words, which prioritises them
         if not self.get_possible_words(): self.score = 0
-        else: self.score = get_word_score(self.get_possible_words()[0]) / self.length
+        else: self.score = len(self.get_possible_words())
         

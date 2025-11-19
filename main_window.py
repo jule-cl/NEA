@@ -2,10 +2,10 @@
 
 from PyQt6.QtWidgets import QMainWindow, QStackedWidget
 
-from title_screen import Title_Screen
-from creation_screen import Creation_Screen
-from layout_screen import Layout_Screen
-from clues_screen import Clues_Screen
+from screen_title import Title_Screen
+from screen_creation import Creation_Screen
+from screen_layout import Layout_Screen
+from screen_clues import Clues_Screen
 
 from app_settings import *
 
