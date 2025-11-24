@@ -1,6 +1,6 @@
 # layout_screen.py
 
-from PyQt6.QtWidgets import QWidget, QLabel, QPushButton, QVBoxLayout
+from PyQt6.QtWidgets import QWidget, QLabel, QPushButton, QVBoxLayout, QComboBox
 from PyQt6.QtCore import Qt, pyqtSignal, QPointF
 
 from widget_positioner import Widget_Positioner
@@ -32,7 +32,7 @@ class Layout_Screen(QWidget):
         # info box
         info_box = Layout_Info_Box(self.cw_controller)
         info_box.setParent(self)
-        self.cw_controller.update_info.connect(info_box.update_stats)
+        self.cw_controller.update_info.connect(info_box.update_info)
         # leave
         leave_button = QPushButton("Back to Menu", self)
         leave_button.setStyleSheet(f"background-color: {Theme.FOREGROUND}; color: {Theme.BACKGROUND}")
@@ -80,11 +80,29 @@ class Layout_Info_Box(QWidget):
         # title
         self.actions_title = QLabel("Layout Tools")
         self.actions_title.setStyleSheet(f"color: {Theme.FOREGROUND}; font-size: 18px; font-weight: bold;")
+        # base pattern selection
+        self.base_selection = QComboBox()
+        self.base_selection.addItems(BASE_SELECTION_OPTIONS)
+        self.base_selection.setStyleSheet(f"""
+            QComboBox {{
+                color: {Theme.FOREGROUND};
+                background-color: {Theme.BACKGROUND};
+                padding: 4px;
+                border: 2px solid {Theme.FOREGROUND};
+                border-radius: 6px;
+            }}
+            QComboBox QAbstractItemView {{
+                color: {Theme.FOREGROUND};
+                background-color: {Theme.BACKGROUND};
+                selection-background-color: {Theme.FOREGROUND};
+                selection-color: {Theme.BACKGROUND};
+            }}
+        """)
         # fill button (click to generate a layout)
         self.fill_button = QPushButton("Generate layout", self)
         self.fill_button.setStyleSheet(f"background-color: {Theme.FOREGROUND}; color: {Theme.BACKGROUND}")
         self.fill_button.setFixedWidth(120)
-        self.fill_button.clicked.connect(self.cw_controller.generate_layout)
+        self.fill_button.clicked.connect(self.generate_layout)
         # empty button (click to empty grid)
         self.empty_button = QPushButton("Empty grid", self)
         self.empty_button.setStyleSheet(f"background-color: {Theme.FOREGROUND}; color: {Theme.BACKGROUND}")
@@ -96,6 +114,7 @@ class Layout_Info_Box(QWidget):
         self.errors_button.setFixedWidth(150)
         # put in overall layout
         actions_layout.addWidget(self.actions_title)
+        actions_layout.addWidget(self.base_selection)
         actions_layout.addWidget(self.fill_button)
         actions_layout.addWidget(self.empty_button)
         actions_layout.addWidget(self.errors_button)
@@ -129,9 +148,16 @@ class Layout_Info_Box(QWidget):
         overall_layout.addLayout(info_layout)
 
         # initialize stats when screen loads
-        self.update_stats()
+        self.update_info()
         
-    def update_stats(self):
+    def generate_layout(self):
+        base_pattern = self.base_selection.currentText()
+        if base_pattern == BASE_SELECTION_OPTIONS[4]:
+            seed = None
+        else: seed = BASE_SELECTION_OPTIONS.index(base_pattern)
+        self.cw_controller.generate_layout(2, 3.6, 13, seed)
+        
+    def update_info(self):
         grid = self.cw_controller.model.get_grid()
         size = len(grid)
 

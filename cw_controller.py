@@ -3,7 +3,7 @@
 from PyQt6.QtCore import QObject, Qt, pyqtSignal
 from app_settings import *
 
-class CW_Controller(QObject):
+class CW_Controller(QObject): # make this a QObject so it can emit pyqtsingals
     update_info = pyqtSignal()
     
     def __init__(self, model, view, editing_mode):
@@ -52,15 +52,26 @@ class CW_Controller(QObject):
     def __type_letter(self, key):
         if Qt.Key.Key_A <= key <= Qt.Key.Key_Z:
             self.model.enter_letter(chr(key))
+        if key == Qt.Key.Key_Backspace:
+            self.model.backspace_clicked()
         self.draw()
     
-    def generate_layout(self):
+    def generate_layout(self, symmetry, ratio, longest_word, seed):
         if not self.model.is_grid_empty(): return False
-        self.model.generate_layout()
+        self.model.generate_layout(symmetry, ratio, longest_word, seed)
+        self.draw()
+        
+    def autofill(self, constraint):
+        if not self.model.is_grid_clear(): return False
+        self.model.autofill(constraint)
         self.draw()
         
     def empty_grid(self):
         self.model.empty_grid()
+        self.draw()
+        
+    def clear_grid(self):
+        self.model.clear_grid()
         self.draw()
         
     def draw(self):

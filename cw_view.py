@@ -54,10 +54,10 @@ class CW_View(QGraphicsView):
                 # draw letter in cell (if present)
                 if not(grid[r][c] == BLOCKED_CELL or grid[r][c] == EMPTY_CELL): 
                     letter = QGraphicsSimpleTextItem(grid[r][c].upper())
+                    letter.setFont(QFont(TEXT_FONT, int(self.cell_size*CLUE_LETTER_SIZE)))
+                    letter.setBrush(QColor(Theme.FOREGROUND))
                     bounding_rect = letter.boundingRect()
                     letter.setPos(x + self.cell_size/2 - bounding_rect.width()/2, y + self.cell_size/2 - bounding_rect.height()/2)
-                    letter.setBrush(QColor(Theme.FOREGROUND))
-                    letter.setFont(QFont(TEXT_FONT, int(self.cell_size*CLUE_LETTER_SIZE)))
                     if (r, c) == selected_cell: letter.setZValue(100) # move selected to top
                     self.scene.addItem(letter)
 
@@ -67,9 +67,9 @@ class CW_View(QGraphicsView):
             x, y = (col+CLUE_NUMBER_BUFFER) * self.cell_size + self.grid_left, (row+CLUE_NUMBER_BUFFER) * self.cell_size + self.grid_top
             
             number = QGraphicsSimpleTextItem(str(index+1))
-            number.setPos(x, y)
             number.setBrush(QColor(Theme.FOREGROUND))
-            number.setFont(QFont(TEXT_FONT, max(8, int(self.cell_size*CLUE_NUMBER_SIZE))))
+            number.setFont(QFont(TEXT_FONT, max(10, int(self.cell_size*CLUE_NUMBER_SIZE))))
+            number.setPos(x, y)
 
             if (row, col) == selected_cell: 
                 number.setZValue(100)

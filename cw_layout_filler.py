@@ -69,14 +69,13 @@ class Crossword_Layout:
     GENERATION RELATED
     """
     # TODO, still tweaking
-    def generate_layout(self, symmetry=2, ratio=3.6, longest_word=13, seed=None):
+    def generate_layout(self, symmetry, ratio, longest_word, seed):
         from random import randint
-        if seed == None: seed = randint(1, 2^16)
+        if seed == None: seed = randint(0, 3)
         
         # generate base
-        base = seed % 4
-        row_offset = int(base & 1 == 1)+1
-        col_offset = int(base & 2 == 2)+1
+        col_offset = int(seed & 1 == 1)+1
+        row_offset = int(seed & 2 == 2)+1
         
         for row in range(row_offset, self.__GRID_SIZE+1, 2):
             for col in range(col_offset, self.__GRID_SIZE+1, 2):

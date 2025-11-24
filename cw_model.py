@@ -1,6 +1,7 @@
 # cw_model.py
 
 from cw_layout_filler import Crossword_Layout
+from cw_autofill import Autofill
 from app_settings import *
 from copy import deepcopy
 from itertools import product
@@ -63,7 +64,7 @@ class CW_Model:
         else:
             self.__grid[row][col] = target
 
-    def generate_layout(self, symmetry=2, ratio=3.2, longest_word=13, seed=None):
+    def generate_layout(self, symmetry, ratio, longest_word, seed):
         if not self.is_grid_empty(): raise Exception("The grid isn't empty")
         self.__grid = Crossword_Layout(self.__GRID_SIZE).generate_layout(symmetry, ratio, longest_word, seed)
         self.__update_numbered_cells()
@@ -87,6 +88,32 @@ class CW_Model:
         
         # change the selected cell
         self.change_selection(new_r, new_c)
+        
+    def backspace_clicked(self):
+        if not self.__selected_cell: return # no cell selected
+        r, c = self.__selected_cell
+        if self.__grid[r][c] == BLOCKED_CELL: return # selected cell is blocked
+        
+        self.__grid[r][c] = EMPTY_CELL # clear letter in grid: this method will still function if the selected cell is empty
+        
+        if self.__selected_direction == 'A':
+            new_r, new_c = r, c-1
+        elif self.__selected_direction == 'D':
+            new_r, new_c = r-1, c
+            
+        if not(0 <= new_r <= self.__GRID_SIZE-1 and 0 <= new_c <= self.__GRID_SIZE-1) \
+            or self.__grid[new_r][new_c] == BLOCKED_CELL:
+            return # this means the selected cell should not be changed
+        
+        # change the selected cell
+        self.change_selection(new_r, new_c)
+
+    def autofill(self, constraint):
+        if not self.is_grid_clear(): raise Exception("The grid isn't clear")
+        filler = Autofill(self.__grid)
+        solution = filler.fill(constraint)
+        if solution: self.__grid = solution; return True
+        return False
 
     # selection related methods
     def change_selection(self, new_r, new_c, direction=None):        
@@ -173,6 +200,12 @@ class CW_Model:
         for row in self.__grid:
             for cell in row:
                 if cell != EMPTY_CELL: return False
+        return True
+    
+    def is_grid_clear(self):
+        for row in self.__grid:
+            for cell in row:
+                if not(cell == EMPTY_CELL or cell == BLOCKED_CELL): return False
         return True
 
     def __is_cell_corner(self, cell):

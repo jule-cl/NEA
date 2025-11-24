@@ -1,4 +1,4 @@
-from math import inf
+from math import inf, e
 from word_funcs import get_words_that_match, get_word_score
 from app_settings import *
 
@@ -32,6 +32,8 @@ class CW_Clue:
     # based off patterns rather than words
     def update_score(self):
         # uses word score to calculate, and gives a lower score to longer words, which prioritises them
-        if not self.get_possible_words(): self.score = 0
-        else: self.score = len(self.get_possible_words())
+        candidates = self.get_possible_words()
+        if not candidates: self.score = 0
+        elif len(candidates) == 1: self.score = 1
+        else: self.score = 20-self.length
         

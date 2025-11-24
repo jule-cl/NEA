@@ -20,7 +20,7 @@ from cw_clue import CW_Clue
 from pqueue import PQueue
 from app_settings import *
       
-class Auto_Fill:
+class Autofill:
     def __init__(self, grid):
         self.grid = grid
         self.__GRID_SIZE = len(grid)
@@ -132,7 +132,7 @@ class Auto_Fill:
             # self.print_grid()
             # input()
 
-        return True
+        return self.grid
     
     def __find_conflict_source(self, failed_clue):
         for clue in self.filled_clues[::-1]:
@@ -213,7 +213,7 @@ if __name__ == '__main__':
     end = time.time()
     print(f'layout gen: {end-start:.2f} s')
     
-    filler = Auto_Fill(grid)
+    filler = Autofill(grid)
     filler.print_grid()
     
     start = time.time()
