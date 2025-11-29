@@ -200,8 +200,8 @@ class Crossword_Layout:
 
     def __block_clump_check(self):
         overlay = Bitboard([(i, j) for i in [0, 1] for j in [0, 1]], self.__GRID_SIZE+2)
-        for row in range(self.__GRID_SIZE-1):
-            for col in range(1, self.__GRID_SIZE+1):
+        for row in range(1, self.__GRID_SIZE-1):
+            for col in range(1, self.__GRID_SIZE-1):
                 new_overlay = deepcopy(overlay)
                 new_overlay.translate_bitboard(row, col)
     
@@ -244,9 +244,9 @@ class Crossword_Layout:
         
 if __name__ == '__main__':
     ## empty/block ratio of 3.6 is fine
-    filler = Crossword_Layout(size=21)
+    filler = Crossword_Layout(size=9)
     
-    filler.generate_layout()
+    filler.generate_layout(symmetry=2, ratio=3.6, longest_word=13, seed=0)
     
     filler.print_grid()
     

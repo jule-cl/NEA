@@ -46,7 +46,7 @@ class CW_View(QGraphicsView):
                 rect = QGraphicsRectItem(x, y, self.cell_size, self.cell_size)
                 rect.setBrush(QBrush(QColor(colour)))
                 if (r, c) == selected_cell: rect.setPen(QPen(QColor(Theme.HIGHLIGHT), self.cell_size*SELECTED_OUTLINE))
-                else: rect.setPen(QPen(QColor(Theme.BLOCKED_CELL)))
+                else: rect.setPen(QPen(QColor(Theme.BLOCKED_CELL), CELL_BORDER_WIDTH))
                 rect.setData(0, (r, c))
                 if (r, c) == selected_cell: rect.setZValue(100) # move selected to top
                 self.scene.addItem(rect)

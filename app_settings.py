@@ -11,6 +11,7 @@ BLOCKED_CELL = '#'
 
 # crossword visual related
 BUFFER = 0.9
+CELL_BORDER_WIDTH = 3
 SELECTED_OUTLINE = 0.08
 CLUE_NUMBER_BUFFER = 0.06
 CLUE_NUMBER_SIZE = 0.25
@@ -30,8 +31,8 @@ class CW_MODE:
 class Theme:
     BACKGROUND = "#e5fff6"
     FOREGROUND = "#261b26"
-    BLOCKED_CELL = "#261b26"
+    BLOCKED_CELL = "#595959"
     SELECTED_CELL =  "#e9ff1f"
     SELECTED_WORD = "#f69221"
     HIGHLIGHT = "#173dff"
-    CELL_BASE = "#e5fff6"
+    CELL_BASE = "#eeeeee"
