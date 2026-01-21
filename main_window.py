@@ -21,16 +21,16 @@ class Main_Window(QMainWindow):
         self.setCentralWidget(self.stack)
 
         # Create all pages
-        self.title_screen = Title_Screen(self.goto_grid_size_screen)
-        self.grid_size_screen = Creation_Screen(self.goto_layout_screen)
+        self.title_screen = Title_Screen(self.goto_creation_screen)
+        self.creation_screen = Creation_Screen(self.goto_layout_screen)
 
         # Add to stack
         self.stack.addWidget(self.title_screen)
-        self.stack.addWidget(self.grid_size_screen)
+        self.stack.addWidget(self.creation_screen)
 
-    def goto_grid_size_screen(self):
-        self.stack.setCurrentWidget(self.grid_size_screen)
-        self.grid_size_screen.deselect_all()
+    def goto_creation_screen(self):
+        self.stack.setCurrentWidget(self.creation_screen)
+        self.creation_screen.deselect_all()
 
     def goto_layout_screen(self, size):
         self.layout_screen = Layout_Screen(size, lambda: self.back_to_title("layout"), self.goto_clues_screen)

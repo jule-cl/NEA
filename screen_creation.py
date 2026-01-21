@@ -1,6 +1,6 @@
 # creation_screen.py
 
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton
 from PyQt6.QtCore import Qt
 from clickable_image import Clickable_Image
 from app_settings import *
@@ -31,6 +31,30 @@ class Creation_Screen(QWidget):
             grid_size_labels_layout.addWidget(label)
         layout.addLayout(grid_size_labels_layout)
         
+        # title text box
+        title_label = QLabel("Enter Crossword Title:")
+        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        title_label.setStyleSheet(f"font-size: 18px; margin-top: 20px; color: {Theme.FOREGROUND}")
+
+        self.title_input = QLineEdit()
+        self.title_input.setPlaceholderText("Crossword Title...")
+        self.title_input.setMaxLength(40)
+        self.title_input.textChanged.connect(self.__on_title_changed)
+        self.title_input.setFixedWidth(300)
+        self.title_input.setStyleSheet(f"""
+            QLineEdit {{
+                padding: 8px;
+                font-size: 16px;
+                border: 2px solid {Theme.FOREGROUND};
+                border-radius: 6px;
+                color: {Theme.FOREGROUND};
+            }}
+        """)
+        layout.addWidget(title_label)
+        layout.addWidget(self.title_input, alignment=Qt.AlignmentFlag.AlignCenter)
+        
+        # 93908858
+        
         # continue button
         self.continue_button = QPushButton("Continue")
         self.continue_button.setEnabled(False)
@@ -45,7 +69,7 @@ class Creation_Screen(QWidget):
                 border-radius: 5px;
             }
             QPushButton:disabled {
-                background-color: #ccc;
+                background-color: #ccc
             }
         """)
         
@@ -62,3 +86,11 @@ class Creation_Screen(QWidget):
         self.grid_size_labels[data].set_selected(True)
         self.selected_grid_size = data
         self.continue_button.setEnabled(True)
+        
+    def __on_title_changed(self, text):
+        self.title_text = text.strip()
+        self.__update_continue_state()
+
+    def __update_continue_state(self):
+        self.continue_button.setEnabled((self.selected_grid_size is not None) and (len(self.title_text) > 0))
+        
