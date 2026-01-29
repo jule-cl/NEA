@@ -13,18 +13,19 @@ class Title_Screen(QWidget):
         title = QLabel("Cryptic Crossword Builder")
         title.setStyleSheet(f"font-size: 32px; font-weight: bold; color: {Theme.FOREGROUND};")
         layout.addWidget(title)
+        layout.setSpacing(4)
 
         # create
         create_button = QPushButton("Create New Crossword")
         create_button.setFixedWidth(200)
-        create_button.setStyleSheet(f"background-color: {Theme.FOREGROUND}; color: {Theme.BACKGROUND};")
+        create_button.setStyleSheet(f"background-color: {Theme.BUTTON_ACTION};")
         create_button.clicked.connect(goto_creation)
         layout.addWidget(create_button)
         
         # saved
         saved_button = QPushButton("Open Saved Crosswords")
         saved_button.setFixedWidth(220)
-        saved_button.setStyleSheet(f"background-color: {Theme.FOREGROUND}; color: {Theme.BACKGROUND};")
+        saved_button.setStyleSheet(f"background-color: {Theme.BUTTON_ACTION};")
         # saved_button.clicked.connect(goto_saved)
         layout.addWidget(saved_button)
 

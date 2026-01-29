@@ -1,0 +1,39 @@
+QPushButton {
+            font-size: 14px;
+            color: {Theme.BACKGROUND};
+            border: none;
+            border-radius: 5px;
+            padding: 6px 8px;
+        }
+
+QFrame#CrosswordCard {
+    background-color: #2a2a2a;
+    border-radius: 10px;
+    padding: 12px;
+}
+
+QFrame#CrosswordCard:hover {
+    background-color: #333333;
+}
+
+QFrame#CrosswordCard QLabel#Title {
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+QFrame#CrosswordCard QLabel#Meta {
+    color: #aaaaaa;
+    font-size: 11px;
+}
+
+QFrame#CrosswordCard QPushButton {
+    background-color: #3a3a3a;
+    color: #eeeeee;
+    border-radius: 6px;
+    padding: 6px 10px;
+}
+
+QFrame#CrosswordCard QPushButton:hover {
+    background-color: #4a4a4a;
+}

@@ -52,25 +52,19 @@ class Creation_Screen(QWidget):
         """)
         layout.addWidget(title_label)
         layout.addWidget(self.title_input, alignment=Qt.AlignmentFlag.AlignCenter)
-        
-        # 93908858
-        
+
         # continue button
         self.continue_button = QPushButton("Continue")
         self.continue_button.setEnabled(False)
         self.continue_button.clicked.connect(lambda: goto_layout_screen(self.selected_grid_size))
         self.continue_button.setFixedWidth(200)
-        self.continue_button.setStyleSheet("""
-            QPushButton {
-                padding: 10px;
-                font-size: 16px;
-                background-color: #0078d4;
-                color: white;
-                border-radius: 5px;
-            }
-            QPushButton:disabled {
-                background-color: #ccc
-            }
+        self.continue_button.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {Theme.BUTTON_ACTION};
+            }}
+            QPushButton:disabled {{
+                background-color: {Theme.BUTTON_DISABLED}
+            }}
         """)
         
         layout.addWidget(self.continue_button, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -85,7 +79,6 @@ class Creation_Screen(QWidget):
         self.deselect_all()
         self.grid_size_labels[data].set_selected(True)
         self.selected_grid_size = data
-        self.continue_button.setEnabled(True)
         
     def __on_title_changed(self, text):
         self.title_text = text.strip()

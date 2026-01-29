@@ -1,6 +1,6 @@
 # layout_screen.py
 
-from PyQt6.QtWidgets import QWidget, QLabel, QPushButton, QVBoxLayout, QComboBox
+from PyQt6.QtWidgets import QWidget, QLabel, QPushButton, QVBoxLayout, QComboBox, QHBoxLayout
 from PyQt6.QtCore import Qt, pyqtSignal, QPointF
 
 from widget_positioner import Widget_Positioner
@@ -77,45 +77,74 @@ class Layout_Info_Box(QWidget):
         # section 1 (actions)
         actions_layout = QVBoxLayout()
         actions_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        actions_layout.setSpacing(5)
         # title
         self.actions_title = QLabel("Layout Tools")
         self.actions_title.setStyleSheet(f"color: {Theme.FOREGROUND}; font-size: 18px; font-weight: bold;")
+        # generat layout layout
+        self.generate_layout_layout = QHBoxLayout()
+        self.generate_layout_layout.setSpacing(10)
         # base pattern selection
         self.base_selection = QComboBox()
         self.base_selection.addItems(BASE_SELECTION_OPTIONS)
         self.base_selection.setStyleSheet(f"""
             QComboBox {{
-                color: {Theme.FOREGROUND};
-                background-color: {Theme.BACKGROUND};
-                padding: 4px;
+                color: {Theme.BACKGROUND};
+                background-color: {Theme.FOREGROUND};
+                padding: 5px;
                 border: 2px solid {Theme.FOREGROUND};
                 border-radius: 6px;
             }}
+            QComboBox::drop-down {{
+                subcontrol-origin: padding;
+                subcontrol-position: top right;
+                width: 25px;
+                border-left: 1px solid {Theme.BACKGROUND};
+            }}
+            QComboBox::down-arrow {{
+                width: 0;
+                height: 0;
+                border-left: 5px solid transparent;
+                border-right: 5px solid transparent;
+                border-top: 5px solid {Theme.BACKGROUND};
+            }}
             QComboBox QAbstractItemView {{
-                color: {Theme.FOREGROUND};
-                background-color: {Theme.BACKGROUND};
-                selection-background-color: {Theme.FOREGROUND};
-                selection-color: {Theme.BACKGROUND};
+                color: {Theme.BACKGROUND};
+                background-color: {Theme.FOREGROUND};
+                selection-background-color: {Theme.BACKGROUND};
+                selection-color: {Theme.FOREGROUND};
+            }}
+        """)        
+        # fill button (next to dropdown)
+        self.fill_button = QPushButton("Generate", self)
+        self.fill_button.clicked.connect(self.generate_layout)
+        self.fill_button.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {Theme.BUTTON_ACTION};
+            }}
+            QPushButton:disabled {{
+                background-color: {Theme.BUTTON_DISABLED}
             }}
         """)
-        # fill button (click to generate a layout)
-        self.fill_button = QPushButton("Generate layout", self)
-        self.fill_button.setStyleSheet(f"background-color: {Theme.FOREGROUND}; color: {Theme.BACKGROUND}")
-        self.fill_button.setFixedWidth(120)
-        self.fill_button.clicked.connect(self.generate_layout)
+        self.generate_layout_layout.addWidget(self.base_selection)
+        self.generate_layout_layout.addWidget(self.fill_button)
         # empty button (click to empty grid)
         self.empty_button = QPushButton("Empty grid", self)
-        self.empty_button.setStyleSheet(f"background-color: {Theme.FOREGROUND}; color: {Theme.BACKGROUND}")
-        self.empty_button.setFixedWidth(100)
         self.empty_button.clicked.connect(self.cw_controller.empty_grid)
+        self.empty_button.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {Theme.BUTTON_ACTION};
+            }}
+            QPushButton:disabled {{
+                background-color: {Theme.BUTTON_DISABLED}
+            }}
+        """)
         # errors button
         self.errors_button = QPushButton("Check/Show errors", self)
-        self.errors_button.setStyleSheet(f"background-color: {Theme.FOREGROUND}; color: {Theme.BACKGROUND}")
-        self.errors_button.setFixedWidth(150)
+        self.errors_button.setStyleSheet(f"background-color: {Theme.BUTTON_ACTION}")
         # put in overall layout
         actions_layout.addWidget(self.actions_title)
-        actions_layout.addWidget(self.base_selection)
-        actions_layout.addWidget(self.fill_button)
+        actions_layout.addLayout(self.generate_layout_layout)
         actions_layout.addWidget(self.empty_button)
         actions_layout.addWidget(self.errors_button)
         overall_layout.addLayout(actions_layout)
@@ -172,4 +201,13 @@ class Layout_Info_Box(QWidget):
         self.stat_block_count.setText(f"Blocked cells: {blocked}")
         self.stat_open_count.setText(f"Open cells: {open_cells}")
         self.stat_block_ratio.setText(f"Blocked ratio: {ratio:.2%}")
-
+        
+        # update buttons
+        self.update_fillable_state()
+        self.update_emptyable_state()
+        
+    def update_fillable_state(self):
+        self.fill_button.setEnabled(self.cw_controller.is_grid_empty())
+        
+    def update_emptyable_state(self):
+        self.empty_button.setEnabled(not self.cw_controller.is_grid_empty())

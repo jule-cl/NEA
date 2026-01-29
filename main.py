@@ -8,6 +8,9 @@ if __name__ == '__main__':
 
     app = QApplication(sys.argv)
     
+    with open("styling.qss") as f:
+        app.setStyleSheet(f.read())
+    
     main_window = Main_Window()
     main_window.show()
     

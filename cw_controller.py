@@ -56,8 +56,11 @@ class CW_Controller(QObject): # make this a QObject so it can emit pyqtsingals
             self.model.backspace_clicked()
         self.draw()
     
+    def is_grid_empty(self):
+        return self.model.is_grid_empty()
+    
     def generate_layout(self, symmetry, ratio, longest_word, seed):
-        if not self.model.is_grid_empty(): return False
+        if not self.is_grid_empty(): return False
         self.model.generate_layout(symmetry, ratio, longest_word, seed)
         self.draw()
         
