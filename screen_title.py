@@ -5,7 +5,7 @@ from PyQt6.QtCore import Qt
 from app_settings import *
 
 class Title_Screen(QWidget):
-    def __init__(self, goto_creation):
+    def __init__(self, goto_creation, goto_saved):
         super().__init__()
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -26,7 +26,7 @@ class Title_Screen(QWidget):
         saved_button = QPushButton("Open Saved Crosswords")
         saved_button.setFixedWidth(220)
         saved_button.setStyleSheet(f"background-color: {Theme.BUTTON_ACTION};")
-        # saved_button.clicked.connect(goto_saved)
+        saved_button.clicked.connect(goto_saved)
         layout.addWidget(saved_button)
 
         self.setLayout(layout)

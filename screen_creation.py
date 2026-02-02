@@ -3,13 +3,15 @@
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton
 from PyQt6.QtCore import Qt
 from clickable_image import Clickable_Image
+from widget_positioner import Widget_Positioner
 from app_settings import *
 
 class Creation_Screen(QWidget):
-    def __init__(self, goto_layout_screen):
+    def __init__(self, goto_title_screen, goto_layout_screen):
         super().__init__()
         self.image_paths = IMAGE_PATHS
         self.selected_grid_size = None
+        self.title_text = ""
         
         layout = QVBoxLayout()
         
@@ -69,7 +71,17 @@ class Creation_Screen(QWidget):
         
         layout.addWidget(self.continue_button, alignment=Qt.AlignmentFlag.AlignCenter)
         layout.addStretch()
+        
+        # back button
+        back_button = QPushButton("Back", self)
+        back_button.setEnabled(True)
+        back_button.clicked.connect(goto_title_screen)
+        back_button.setFixedWidth(200)
+        back_button.setStyleSheet(f"background-color: {Theme.BUTTON_ACTION};")
+        
+        self.show()
         self.setLayout(layout)
+        Widget_Positioner.bottom_left(back_button, WIDGET_PADDING, WINDOW_H-WIDGET_PADDING)
     
     def deselect_all(self):
         for label in self.grid_size_labels.values():
@@ -79,6 +91,7 @@ class Creation_Screen(QWidget):
         self.deselect_all()
         self.grid_size_labels[data].set_selected(True)
         self.selected_grid_size = data
+        self.__update_continue_state()
         
     def __on_title_changed(self, text):
         self.title_text = text.strip()

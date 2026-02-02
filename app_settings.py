@@ -1,7 +1,7 @@
 # app_info.py
 
 # dimensions
-WINDOW_W = 960 # 1536
+WINDOW_W = 1200 # 1536
 WINDOW_H = 800 # 960
 GRID_DIM = 500
 WIDGET_PADDING = min(WINDOW_W, WINDOW_H)//60
@@ -37,6 +37,6 @@ class Theme:
     HIGHLIGHT = "#173dff"
     CELL_BASE = "#eeeeee"
     
-    BUTTON_ACTION = "#0f1317"
+    BUTTON_ACTION = "#261b26"
     BUTTON_DISABLED = "#cccccc"
     # BUTTON_HOVER = "#005a9e"

@@ -35,11 +35,11 @@ class Layout_Screen(QWidget):
         self.cw_controller.update_info.connect(info_box.update_info)
         # leave
         leave_button = QPushButton("Back to Menu", self)
-        leave_button.setStyleSheet(f"background-color: {Theme.FOREGROUND}; color: {Theme.BACKGROUND}")
+        leave_button.setStyleSheet(f"background-color: {Theme.FOREGROUND};")
         leave_button.clicked.connect(back_to_title)
         # next
         next_button = QPushButton("Go next", self)
-        next_button.setStyleSheet(f"background-color: {Theme.FOREGROUND}; color: {Theme.BACKGROUND}")
+        next_button.setStyleSheet(f"background-color: {Theme.FOREGROUND};")
         next_button.clicked.connect(lambda: go_next(self.cw_model.get_grid_size(), self.cw_model.get_grid()))
         
         self.cw_controller.draw() # puts crossword grid onto view
@@ -47,7 +47,7 @@ class Layout_Screen(QWidget):
         # move stuff
         Widget_Positioner.middle_left(self.cw_view, WIDGET_PADDING, WINDOW_H//2)
         Widget_Positioner.top_center(title, WINDOW_W//2, WIDGET_PADDING)
-        Widget_Positioner.middle_right(info_box, WINDOW_W-WIDGET_PADDING, WINDOW_H//2)
+        Widget_Positioner.middle_right(info_box, WINDOW_W-4*WIDGET_PADDING, WINDOW_H//2)
         Widget_Positioner.bottom_left(leave_button, WIDGET_PADDING, WINDOW_H-WIDGET_PADDING)
         Widget_Positioner.bottom_right(next_button, WINDOW_W-WIDGET_PADDING, WINDOW_H-WIDGET_PADDING)
         
