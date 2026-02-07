@@ -18,7 +18,7 @@ class Layout_Screen(QWidget):
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         
         # MVC setup
-        self.cw_model = CW_Model(grid_size) # model 
+        self.cw_model = CW_Model(grid_size=grid_size) # model 
         self.cw_view = CW_View(self.cw_model) # view -> reference to model
         self.cw_view.setParent(self)
         self.cw_view.setFocusPolicy(Qt.FocusPolicy.NoFocus)
@@ -40,7 +40,7 @@ class Layout_Screen(QWidget):
         # next
         next_button = QPushButton("Go next", self)
         next_button.setStyleSheet(f"background-color: {Theme.FOREGROUND};")
-        next_button.clicked.connect(lambda: go_next(self.cw_model.get_grid_size(), self.cw_model.get_grid()))
+        next_button.clicked.connect(lambda: go_next(self.cw_model.get_grid_object()))
         
         self.cw_controller.draw() # puts crossword grid onto view
         self.show() # the elements don't have a width/height before they are on the screen, so show() first
@@ -169,7 +169,7 @@ class Layout_Info_Box(QWidget):
             lbl.setStyleSheet(f"color: {Theme.FOREGROUND}; font-size: 14px;")
         # put in overall layout
         info_layout.addWidget(stats_title)
-        info_layout.addSpacing(5)
+        info_layout.addSpacing(WIDGET_PADDING)
         info_layout.addWidget(self.stat_block_ratio)
         info_layout.addWidget(self.stat_block_count)
         info_layout.addWidget(self.stat_open_count)
@@ -184,7 +184,7 @@ class Layout_Info_Box(QWidget):
         if base_pattern == BASE_SELECTION_OPTIONS[4]:
             seed = None
         else: seed = BASE_SELECTION_OPTIONS.index(base_pattern)
-        self.cw_controller.generate_layout(2, 3.6, 13, seed)
+        self.cw_controller.generate_layout(3.6, seed)
         
     def update_info(self):
         grid = self.cw_controller.model.get_grid()

@@ -13,13 +13,12 @@ class Clues_Screen(QWidget):
     mouse_clicked = pyqtSignal(QPointF)
     key_pressed = pyqtSignal(int)
     
-    def __init__(self, grid_size, grid, go_back):
+    def __init__(self, grid, go_back):
         super().__init__()
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
 
         # MVC setup
-        self.cw_model = CW_Model(grid_size)
-        self.cw_model.set_grid(grid)
+        self.cw_model = CW_Model(grid_object=grid)
         self.cw_view = CW_View(self.cw_model)
         self.cw_view.setParent(self)
         self.cw_view.setFocusPolicy(Qt.FocusPolicy.NoFocus)
@@ -95,45 +94,19 @@ class Clues_Info_Box(QWidget):
         # section 2 (info)
         info_layout = QVBoxLayout()
         info_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        # title
-        stats_title = QLabel("Layout Statistics")
-        stats_title.setStyleSheet(f"color: {Theme.FOREGROUND}; font-size: 18px; font-weight: bold;")
-        # labels
-        self.stat_block_ratio = QLabel()
-        self.stat_block_count = QLabel()
-        self.stat_open_count = QLabel()
-        self.stat_grid_size = QLabel()
-        for lbl in [
-            self.stat_block_ratio,
-            self.stat_block_count,
-            self.stat_open_count,
-            self.stat_grid_size
-        ]:
-            lbl.setStyleSheet(f"color: {Theme.FOREGROUND}; font-size: 14px;")
-        # put in overall layout
-        info_layout.addWidget(stats_title)
-        info_layout.addSpacing(5)
-        info_layout.addWidget(self.stat_block_ratio)
-        info_layout.addWidget(self.stat_block_count)
-        info_layout.addWidget(self.stat_open_count)
-        info_layout.addWidget(self.stat_grid_size)
+        # current_clue_label
+        self.current_clue_label = QLabel("", self)
+        self.current_clue_label.setStyleSheet(f"color: {Theme.FOREGROUND}; font-size: 14px;")
+        
+        # add to overall layout
+        info_layout.addWidget(self.current_clue_label)
         overall_layout.addLayout(info_layout)
 
         # initialize stats when screen loads
         self.update_info()
         
     def update_info(self):
-        grid = self.cw_controller.model.get_grid()
-        size = len(grid)
-
-        total = size * size
-        blocked = sum(cell == "#" for row in grid for cell in row)
-        open_cells = total - blocked
-
-        ratio = blocked / total if total > 0 else 0
-
-        # fill labels
-        self.stat_grid_size.setText(f"Grid size: {size} * {size}")
-        self.stat_block_count.setText(f"Blocked cells: {blocked}")
-        self.stat_open_count.setText(f"Open cells: {open_cells}")
-        self.stat_block_ratio.setText(f"Blocked ratio: {ratio:.2%}")
+        selected_clue = self.cw_controller.get_selected_clue()
+        clue_word = selected_clue.word if selected_clue else "N/A"
+        self.current_clue_label.setText(clue_word)
+        

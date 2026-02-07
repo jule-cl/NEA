@@ -6,9 +6,7 @@ from itertools import product
 from copy import deepcopy
 from collections import deque
 from bitboard import Bitboard
-
-EMPTY_CELL = ""
-BLOCKED_CELL = "#"
+from app_settings import *
 
 O_DIRECTIONS = [(1, 0), (-1, 0), (0, 1), (0, -1)]
 
@@ -69,9 +67,11 @@ class Crossword_Layout:
     GENERATION RELATED
     """
     # TODO, still tweaking
-    def generate_layout(self, symmetry, ratio, longest_word, seed):
+    def generate_layout(self, grid, target_ratio, seed):
         from random import randint
         if seed == None: seed = randint(0, 3)
+        
+        symmetry = grid.get_symmetry()
         
         # generate base
         col_offset = int(seed & 1 == 1)+1
@@ -82,7 +82,7 @@ class Crossword_Layout:
                 self.__flip_cell(row, col)
                 
         # this can't always be done ..?
-        target_blocked = (self.__GRID_SIZE**2) / ratio
+        target_blocked = (self.__GRID_SIZE**2) / target_ratio
         
         # if self.__GRID_SIZE > longest_word:
         #     for t_row in range((row_offset-1)^1+1, self.__GRID_SIZE//2+1, 2):
@@ -246,7 +246,7 @@ if __name__ == '__main__':
     ## empty/block ratio of 3.6 is fine
     filler = Crossword_Layout(size=9)
     
-    filler.generate_layout(symmetry=2, ratio=3.6, longest_word=13, seed=0)
+    filler.generate_layout(symmetry=2, target_ratio=3.6, longest_word=13, seed=0)
     
     filler.print_grid()
     

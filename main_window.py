@@ -36,7 +36,7 @@ class Main_Window(QMainWindow):
             case "layout":
                 self.current_screen = Layout_Screen(data[0], lambda: self.goto_screen("title"), partial(self.goto_screen, "clues"))
             case "clues":
-                self.current_screen = Clues_Screen(data[0], data[1], lambda: self.goto_screen("title"))
+                self.current_screen = Clues_Screen(data[0], lambda: self.goto_screen("title"))
             case "saved":
                 self.current_screen = Saved_Screen(lambda: self.goto_screen("title"))
             case _:

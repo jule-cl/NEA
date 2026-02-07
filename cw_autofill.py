@@ -185,8 +185,6 @@ class Autofill:
                 if self.__corner_checked[cell_num][other_dir]: continue # if the cell was filled from the other direction
             self.grid[row][col] = EMPTY_CELL
             
-
-            
         return word
                 
     def __update_priority(self, affected_clue):

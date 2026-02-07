@@ -29,7 +29,7 @@ class CW_View(QGraphicsView):
         self.setStyleSheet(f"background: transparent; border: none;")
         grid = self.model.get_grid()
         selected_cell = self.model.get_selected_cell()
-        selected_word = self.model.get_cells_in_selected_word()
+        cells_in_selected_clue = self.model.get_cells_in_selected_clue()
         
         for r in range(self.grid_size):
             for c in range(self.grid_size):
@@ -38,7 +38,7 @@ class CW_View(QGraphicsView):
                 if grid[r][c] == BLOCKED_CELL: colour = Theme.BLOCKED_CELL
                 elif editing_mode == CW_MODE.CLUES:
                     if (r, c) == selected_cell: colour = Theme.SELECTED_CELL
-                    elif (r, c) in selected_word: colour = Theme.SELECTED_WORD
+                    elif (r, c) in cells_in_selected_clue: colour = Theme.SELECTED_WORD
                     
                 x, y = c * self.cell_size + self.grid_left, r * self.cell_size + self.grid_top
                 

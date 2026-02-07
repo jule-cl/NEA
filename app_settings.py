@@ -6,7 +6,7 @@ WINDOW_H = 800 # 960
 GRID_DIM = 500
 WIDGET_PADDING = min(WINDOW_W, WINDOW_H)//60
 
-EMPTY_CELL = ''
+EMPTY_CELL = '_'
 BLOCKED_CELL = '#'
 
 # crossword visual related
@@ -19,7 +19,7 @@ CLUE_LETTER_SIZE = 0.7
 TEXT_FONT = "Arial"
 
 # generation related
-GRID_SIZES = [9, 11, 15]
+GRID_SIZES = [11, 13, 15]
 BASE_SELECTION_OPTIONS = ["top-left", "top-right", "bottom-left", "bottom-right", "random"]
 
 IMAGE_PATHS = ["images/pic_a.png", "images/pic_b.png", "images/pic_c.png"]

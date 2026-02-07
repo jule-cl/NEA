@@ -19,7 +19,7 @@ class CW_Controller(QObject): # make this a QObject so it can emit pyqtsingals
         self.model.change_selection(row, col)
         
         if self.editing_mode == CW_MODE.LAYOUT and row != -1 and col != -1:
-            self.model.toggle_blocked(row, col)
+            self.model.flip_blocked_symmetry(row, col)
             
         self.draw()
         
@@ -53,19 +53,19 @@ class CW_Controller(QObject): # make this a QObject so it can emit pyqtsingals
         if Qt.Key.Key_A <= key <= Qt.Key.Key_Z:
             self.model.enter_letter(chr(key))
         if key == Qt.Key.Key_Backspace:
-            self.model.backspace_clicked()
+            self.model.enter_letter(EMPTY_CELL)
         self.draw()
     
     def is_grid_empty(self):
         return self.model.is_grid_empty()
     
-    def generate_layout(self, symmetry, ratio, longest_word, seed):
+    def generate_layout(self, target_ratio, seed):
         if not self.is_grid_empty(): return False
-        self.model.generate_layout(symmetry, ratio, longest_word, seed)
+        self.model.generate_layout(target_ratio, seed)
         self.draw()
         
     def autofill(self, constraint):
-        if not self.model.is_grid_clear(): return False
+        if not self.model.is_grid_clear(): raise Exception("The grid isn't clear")
         self.model.autofill(constraint)
         self.draw()
         
@@ -76,6 +76,9 @@ class CW_Controller(QObject): # make this a QObject so it can emit pyqtsingals
     def clear_grid(self):
         self.model.clear_grid()
         self.draw()
+        
+    def get_selected_clue(self):
+        return self.model.get_selected_clue()
         
     def draw(self):
         self.view.draw(self.editing_mode)
