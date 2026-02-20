@@ -32,7 +32,7 @@ class Layout_Screen(QWidget):
         # info box
         info_box = Layout_Info_Box(self.cw_controller)
         info_box.setParent(self)
-        self.cw_controller.update_info.connect(info_box.update_info)
+        self.cw_controller.update_info.connect(info_box.update)
         # leave
         leave_button = QPushButton("Back to Menu", self)
         leave_button.setStyleSheet(f"background-color: {Theme.FOREGROUND};")
@@ -177,7 +177,7 @@ class Layout_Info_Box(QWidget):
         overall_layout.addLayout(info_layout)
 
         # initialize stats when screen loads
-        self.update_info()
+        self.update()
         
     def generate_layout(self):
         base_pattern = self.base_selection.currentText()
@@ -186,7 +186,7 @@ class Layout_Info_Box(QWidget):
         else: seed = BASE_SELECTION_OPTIONS.index(base_pattern)
         self.cw_controller.generate_layout(3.6, seed)
         
-    def update_info(self):
+    def update(self):
         grid = self.cw_controller.model.get_grid()
         size = len(grid)
 
@@ -203,11 +203,5 @@ class Layout_Info_Box(QWidget):
         self.stat_block_ratio.setText(f"Blocked ratio: {ratio:.2%}")
         
         # update buttons
-        self.update_fillable_state()
-        self.update_emptyable_state()
-        
-    def update_fillable_state(self):
         self.fill_button.setEnabled(self.cw_controller.is_grid_empty())
-        
-    def update_emptyable_state(self):
         self.empty_button.setEnabled(not self.cw_controller.is_grid_empty())

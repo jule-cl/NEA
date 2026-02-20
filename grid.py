@@ -136,6 +136,7 @@ class Grid:
     def clear_grid(self):
         newGrid = [[EMPTY_CELL if cell != BLOCKED_CELL else BLOCKED_CELL for cell in row] for row in self.__grid]
         self.__grid = deepcopy(newGrid)
+        self.__update_clues()
     
     def is_grid_empty(self):
         for row in self.__grid:

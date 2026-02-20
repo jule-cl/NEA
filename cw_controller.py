@@ -59,6 +59,9 @@ class CW_Controller(QObject): # make this a QObject so it can emit pyqtsingals
     def is_grid_empty(self):
         return self.model.is_grid_empty()
     
+    def is_grid_clear(self):
+        return self.model.is_grid_clear()
+    
     def generate_layout(self, target_ratio, seed):
         if not self.is_grid_empty(): return False
         self.model.generate_layout(target_ratio, seed)

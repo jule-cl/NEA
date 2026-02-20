@@ -32,7 +32,7 @@ class Clues_Screen(QWidget):
         # info box
         info_box = Clues_Info_Box(self.cw_controller)
         info_box.setParent(self)
-        self.cw_controller.update_info.connect(info_box.update_info)
+        self.cw_controller.update_info.connect(info_box.update)
         # leave
         leave_button = QPushButton("Back to Menu", self)
         leave_button.setStyleSheet(f"background-color: {Theme.FOREGROUND}; color: {Theme.BACKGROUND}")
@@ -43,7 +43,7 @@ class Clues_Screen(QWidget):
         # move stuff
         Widget_Positioner.middle_left(self.cw_view, WIDGET_PADDING, WINDOW_H//2)
         Widget_Positioner.top_center(title, WINDOW_W//2, WIDGET_PADDING)
-        Widget_Positioner.middle_right(info_box, WINDOW_W-WIDGET_PADDING, WINDOW_H//2)
+        Widget_Positioner.middle_right(info_box, WINDOW_W-4*WIDGET_PADDING, WINDOW_H//2)
         Widget_Positioner.bottom_left(leave_button, WIDGET_PADDING, WINDOW_H-WIDGET_PADDING)
         
     def mousePressEvent(self, event):
@@ -77,14 +77,26 @@ class Clues_Info_Box(QWidget):
         self.actions_title.setStyleSheet(f"color: {Theme.FOREGROUND}; font-size: 18px; font-weight: bold;")
         # fill button (click to autofill)
         self.autofill_button = QPushButton("Autofill", self)
-        self.autofill_button.setStyleSheet(f"background-color: {Theme.FOREGROUND}; color: {Theme.BACKGROUND}")
-        self.autofill_button.setFixedWidth(120)
         self.autofill_button.clicked.connect(lambda: self.cw_controller.autofill(constraint=5))
+        self.autofill_button.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {Theme.BUTTON_ACTION};
+            }}
+            QPushButton:disabled {{
+                background-color: {Theme.BUTTON_DISABLED}
+            }}
+        """)
         # empty button (click to empty grid)
         self.clear_button = QPushButton("Clear words", self)
-        self.clear_button.setStyleSheet(f"background-color: {Theme.FOREGROUND}; color: {Theme.BACKGROUND}")
-        self.clear_button.setFixedWidth(100)
         self.clear_button.clicked.connect(self.cw_controller.clear_grid)
+        self.clear_button.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {Theme.BUTTON_ACTION};
+            }}
+            QPushButton:disabled {{
+                background-color: {Theme.BUTTON_DISABLED}
+            }}
+        """)
         # put in overall layout
         actions_layout.addWidget(self.actions_title)
         actions_layout.addWidget(self.autofill_button)
@@ -103,10 +115,13 @@ class Clues_Info_Box(QWidget):
         overall_layout.addLayout(info_layout)
 
         # initialize stats when screen loads
-        self.update_info()
+        self.update()
         
-    def update_info(self):
+    def update(self):
         selected_clue = self.cw_controller.get_selected_clue()
         clue_word = selected_clue.word if selected_clue else "N/A"
         self.current_clue_label.setText(clue_word)
         
+        # update buttons
+        self.autofill_button.setEnabled(self.cw_controller.is_grid_clear())
+        self.clear_button.setEnabled(not self.cw_controller.is_grid_clear())
