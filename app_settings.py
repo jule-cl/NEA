@@ -21,6 +21,7 @@ TEXT_FONT = "Arial"
 # generation related
 GRID_SIZES = [11, 13, 15]
 BASE_SELECTION_OPTIONS = ["top-left", "top-right", "bottom-left", "bottom-right", "random"]
+SYMMETRY_OPTIONS = {"None":1, "2-fold":2, "4-fold":4}
 
 IMAGE_PATHS = ["images/pic_a.png", "images/pic_b.png", "images/pic_c.png"]
 
@@ -30,6 +31,7 @@ class CW_MODE:
     
 class Theme:
     BACKGROUND = "#e5fff6"
+    SECONDARY_BACKGROUND = "#695ee3"
     FOREGROUND = "#261b26"
     BLOCKED_CELL = "#261b26"
     SELECTED_CELL =  "#e9ff1f"

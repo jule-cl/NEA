@@ -6,20 +6,23 @@ from app_settings import *
 class CW_Controller(QObject): # make this a QObject so it can emit pyqtsingals
     update_info = pyqtSignal()
     
-    def __init__(self, model, view, editing_mode):
+    def __init__(self, model, view, editing_mode, parent_screen):
         super().__init__()
         self.model = model
         self.view = view
         
         self.editing_mode = editing_mode
         self.view.draw(self.editing_mode)
+        
+        self.parent_screen = parent_screen
 
     def handle_mouse_clicked(self, scene_pos):
         row, col = self.view.rect_at(scene_pos)
         self.model.change_selection(row, col)
         
         if self.editing_mode == CW_MODE.LAYOUT and row != -1 and col != -1:
-            self.model.flip_blocked_symmetry(row, col)
+            symmetry = self.parent_screen.get_symmetry()
+            self.model.flip_blocked_symmetry(row, col, symmetry)
             
         self.draw()
         
@@ -62,9 +65,9 @@ class CW_Controller(QObject): # make this a QObject so it can emit pyqtsingals
     def is_grid_clear(self):
         return self.model.is_grid_clear()
     
-    def generate_layout(self, target_ratio, seed):
+    def generate_layout(self, target_ratio, seed, symmetry):
         if not self.is_grid_empty(): return False
-        self.model.generate_layout(target_ratio, seed)
+        self.model.generate_layout(target_ratio, seed, symmetry)
         self.draw()
         
     def autofill(self, constraint):

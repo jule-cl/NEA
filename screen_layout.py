@@ -22,7 +22,7 @@ class Layout_Screen(QWidget):
         self.cw_view = CW_View(self.cw_model) # view -> reference to model
         self.cw_view.setParent(self)
         self.cw_view.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.cw_controller = CW_Controller(self.cw_model, self.cw_view, CW_MODE.LAYOUT) # controller -> reference to both
+        self.cw_controller = CW_Controller(self.cw_model, self.cw_view, CW_MODE.LAYOUT, self) # controller -> reference to both
         self.mouse_clicked.connect(self.cw_controller.handle_mouse_clicked)
         self.key_pressed.connect(self.cw_controller.handle_key_pressed)
         
@@ -30,9 +30,9 @@ class Layout_Screen(QWidget):
         title = QLabel("EDITING LAYOUT", self)
         title.setStyleSheet(f"color: {Theme.FOREGROUND}; font-size: 24px;")
         # info box
-        info_box = Layout_Info_Box(self.cw_controller)
-        info_box.setParent(self)
-        self.cw_controller.update_info.connect(info_box.update)
+        self.info_box = Layout_Info_Box(self.cw_controller)
+        self.info_box.setParent(self)
+        self.cw_controller.update_info.connect(self.info_box.update)
         # leave
         leave_button = QPushButton("Back to Menu", self)
         leave_button.setStyleSheet(f"background-color: {Theme.FOREGROUND};")
@@ -47,7 +47,7 @@ class Layout_Screen(QWidget):
         # move stuff
         Widget_Positioner.middle_left(self.cw_view, WIDGET_PADDING, WINDOW_H//2)
         Widget_Positioner.top_center(title, WINDOW_W//2, WIDGET_PADDING)
-        Widget_Positioner.middle_right(info_box, WINDOW_W-4*WIDGET_PADDING, WINDOW_H//2)
+        Widget_Positioner.middle_right(self.info_box, WINDOW_W-4*WIDGET_PADDING, WINDOW_H//2)
         Widget_Positioner.bottom_left(leave_button, WIDGET_PADDING, WINDOW_H-WIDGET_PADDING)
         Widget_Positioner.bottom_right(next_button, WINDOW_W-WIDGET_PADDING, WINDOW_H-WIDGET_PADDING)
         
@@ -60,6 +60,9 @@ class Layout_Screen(QWidget):
             
     def keyPressEvent(self, event):
         self.key_pressed.emit(event.key())
+        
+    def get_symmetry(self):
+        return self.info_box.get_symmetry()
         
 class Layout_Info_Box(QWidget):
     def __init__(self, cw_controller):
@@ -87,6 +90,7 @@ class Layout_Info_Box(QWidget):
         # base pattern selection
         self.base_selection = QComboBox()
         self.base_selection.addItems(BASE_SELECTION_OPTIONS)
+        self.base_selection.setCurrentIndex(3) # defaults to "bottom-right", as it is most common
         self.base_selection.setStyleSheet(f"""
             QComboBox {{
                 color: {Theme.BACKGROUND};
@@ -114,7 +118,39 @@ class Layout_Info_Box(QWidget):
                 selection-background-color: {Theme.BACKGROUND};
                 selection-color: {Theme.FOREGROUND};
             }}
-        """)        
+        """) 
+        # symmetry options
+        self.symmetry_options = QComboBox()
+        self.symmetry_options.addItems(SYMMETRY_OPTIONS.keys()) 
+        self.symmetry_options.setCurrentIndex(1) # defaults to "2-fold", as it is most common  
+        self.symmetry_options.setStyleSheet(f"""
+            QComboBox {{
+                color: {Theme.BACKGROUND};
+                background-color: {Theme.FOREGROUND};
+                padding: 5px;
+                border: 2px solid {Theme.FOREGROUND};
+                border-radius: 6px;
+            }}
+            QComboBox::drop-down {{
+                subcontrol-origin: padding;
+                subcontrol-position: top right;
+                width: 25px;
+                border-left: 1px solid {Theme.BACKGROUND};
+            }}
+            QComboBox::down-arrow {{
+                width: 0;
+                height: 0;
+                border-left: 5px solid transparent;
+                border-right: 5px solid transparent;
+                border-top: 5px solid {Theme.BACKGROUND};
+            }}
+            QComboBox QAbstractItemView {{
+                color: {Theme.BACKGROUND};
+                background-color: {Theme.FOREGROUND};
+                selection-background-color: {Theme.BACKGROUND};
+                selection-color: {Theme.FOREGROUND};
+            }}
+        """) 
         # fill button (next to dropdown)
         self.fill_button = QPushButton("Generate", self)
         self.fill_button.clicked.connect(self.generate_layout)
@@ -127,6 +163,7 @@ class Layout_Info_Box(QWidget):
             }}
         """)
         self.generate_layout_layout.addWidget(self.base_selection)
+        self.generate_layout_layout.addWidget(self.symmetry_options)
         self.generate_layout_layout.addWidget(self.fill_button)
         # empty button (click to empty grid)
         self.empty_button = QPushButton("Empty grid", self)
@@ -150,31 +187,57 @@ class Layout_Info_Box(QWidget):
         overall_layout.addLayout(actions_layout)
         
         # section 2 (info)
-        info_layout = QVBoxLayout()
+        info_container = QWidget()
+        info_layout = QVBoxLayout(info_container)
         info_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        info_layout.setSpacing(8)
+        info_layout.setContentsMargins(15, 15, 15, 15)
+
+        info_container.setStyleSheet(f"""
+            QWidget {{
+                background-color: {Theme.SECONDARY_BACKGROUND};
+                border-radius: 10px;
+            }}
+
+            QLabel#StatsTitle {{
+                color: {Theme.FOREGROUND};
+                font-size: 18px;
+                font-weight: 600;
+            }}
+
+            QLabel#StatsLabel {{
+                color: {Theme.FOREGROUND};
+                font-size: 14px;
+            }}
+        """)
+
         # title
         stats_title = QLabel("Layout Statistics")
-        stats_title.setStyleSheet(f"color: {Theme.FOREGROUND}; font-size: 18px; font-weight: bold;")
+        stats_title.setObjectName("StatsTitle")
+
         # labels
         self.stat_block_ratio = QLabel()
         self.stat_block_count = QLabel()
         self.stat_open_count = QLabel()
         self.stat_grid_size = QLabel()
+
         for lbl in [
             self.stat_block_ratio,
             self.stat_block_count,
             self.stat_open_count,
             self.stat_grid_size
         ]:
-            lbl.setStyleSheet(f"color: {Theme.FOREGROUND}; font-size: 14px;")
-        # put in overall layout
+            lbl.setObjectName("StatsLabel")
+
+        # add to layout
         info_layout.addWidget(stats_title)
-        info_layout.addSpacing(WIDGET_PADDING)
+        info_layout.addSpacing(10)
         info_layout.addWidget(self.stat_block_ratio)
         info_layout.addWidget(self.stat_block_count)
         info_layout.addWidget(self.stat_open_count)
         info_layout.addWidget(self.stat_grid_size)
-        overall_layout.addLayout(info_layout)
+
+        overall_layout.addWidget(info_container)
 
         # initialize stats when screen loads
         self.update()
@@ -184,14 +247,17 @@ class Layout_Info_Box(QWidget):
         if base_pattern == BASE_SELECTION_OPTIONS[4]:
             seed = None
         else: seed = BASE_SELECTION_OPTIONS.index(base_pattern)
-        self.cw_controller.generate_layout(3.6, seed)
+        self.cw_controller.generate_layout(3.6, seed, self.get_symmetry())
+        
+    def get_symmetry(self):
+        return SYMMETRY_OPTIONS[self.symmetry_options.currentText()]
         
     def update(self):
         grid = self.cw_controller.model.get_grid()
         size = len(grid)
 
         total = size * size
-        blocked = sum(cell == "#" for row in grid for cell in row)
+        blocked = sum(cell == BLOCKED_CELL for row in grid for cell in row)
         open_cells = total - blocked
 
         ratio = blocked / total if total > 0 else 0

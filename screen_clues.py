@@ -9,6 +9,8 @@ from cw_view import CW_View
 from cw_controller import CW_Controller
 from app_settings import *
 
+from word_funcs import Word_Funcs
+
 class Clues_Screen(QWidget):
     mouse_clicked = pyqtSignal(QPointF)
     key_pressed = pyqtSignal(int)
@@ -22,7 +24,7 @@ class Clues_Screen(QWidget):
         self.cw_view = CW_View(self.cw_model)
         self.cw_view.setParent(self)
         self.cw_view.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.cw_controller = CW_Controller(self.cw_model, self.cw_view, CW_MODE.CLUES)
+        self.cw_controller = CW_Controller(self.cw_model, self.cw_view, CW_MODE.CLUES, self)
         self.mouse_clicked.connect(self.cw_controller.handle_mouse_clicked)
         self.key_pressed.connect(self.cw_controller.handle_key_pressed)
         
@@ -34,7 +36,7 @@ class Clues_Screen(QWidget):
         info_box.setParent(self)
         self.cw_controller.update_info.connect(info_box.update)
         # leave
-        leave_button = QPushButton("Back to Menu", self)
+        leave_button = QPushButton("Save and back to Menu", self)
         leave_button.setStyleSheet(f"background-color: {Theme.FOREGROUND}; color: {Theme.BACKGROUND}")
         leave_button.clicked.connect(go_back)
 
@@ -119,8 +121,14 @@ class Clues_Info_Box(QWidget):
         
     def update(self):
         selected_clue = self.cw_controller.get_selected_clue()
-        clue_word = selected_clue.word if selected_clue else "N/A"
-        self.current_clue_label.setText(clue_word)
+        if not selected_clue:
+            text = "N/A"
+        else:
+            clue_word = selected_clue.word
+            words = Word_Funcs.displayed_to_word(clue_word)
+            if not words: text = clue_word
+            else: text = '\n'.join(words)
+        self.current_clue_label.setText(text)
         
         # update buttons
         self.autofill_button.setEnabled(self.cw_controller.is_grid_clear())

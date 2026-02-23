@@ -67,12 +67,10 @@ class Crossword_Layout:
     GENERATION RELATED
     """
     # TODO, still tweaking
-    def generate_layout(self, grid, target_ratio, seed):
+    def generate_layout(self, target_ratio, seed, symmetry):
         from random import randint
         if seed == None: seed = randint(0, 3)
-        
-        symmetry = grid.get_symmetry()
-        
+
         # generate base
         col_offset = int(seed & 1 == 1)+1
         row_offset = int(seed & 2 == 2)+1

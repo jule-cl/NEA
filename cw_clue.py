@@ -1,5 +1,5 @@
-from math import inf, e
-from word_funcs import get_words_that_match, get_word_score
+from math import inf
+from word_funcs import Word_Funcs
 from app_settings import *
 
 class CW_Clue:
@@ -24,7 +24,7 @@ class CW_Clue:
     
     def get_possible_words(self):
         regex = self.__get_regex()
-        candidates = sorted([w.upper() for w in get_words_that_match(regex)], key=lambda w:get_word_score(w))
+        candidates = sorted([w for w in Word_Funcs.get_words_that_match(regex)], key=lambda w:Word_Funcs.get_word_score(w))
         candidates = list(filter(lambda w: w not in self.parent_grid.used_words, candidates)) # filter out used words
         candidates = list(filter(lambda w: w not in self.failed_words, candidates)) # filter out failed words
         return candidates

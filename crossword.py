@@ -3,10 +3,11 @@
 from app_settings import *
 from copy import deepcopy
 from itertools import product
+import json
 
 from clue import Clue
 
-class Grid:
+class Crossword:
     def __init__(self, grid_size):
         """
         selected_cell: (int, int)
@@ -16,14 +17,27 @@ class Grid:
         self.__GRID_SIZE = grid_size
         self.__grid = [] # coordinates are 0-indexed
         self.empty_grid()
-        
-        self.__symmetry = 2 # defaults to 2-fold
 
         self.__numbered_cells = [] # (row, col, direction)
         self.__update_clues()
-        
         self.__all_clues = []
-        self.total_blocked = 0
+
+    # saving / loading
+    def save(self, filepath):
+        data = {
+            "grid_size": self.__GRID_SIZE,
+            "grid": self.__grid
+        }
+        with open(filepath, "w") as f:
+            json.dump(data, f, indent=2)
+
+    @classmethod
+    def load(cls, filepath):
+        with open(filepath, "r") as f:
+            data = json.load(f)
+        crossword = cls(data["grid_size"])
+        crossword.set_grid(data["grid"])
+        return crossword
 
     # layout related methods
     def __update_numbered_cells(self):
@@ -64,15 +78,15 @@ class Grid:
                 new_clue = Clue(self, cell_row, cell_col, d, length, word)
                 self.__all_clues.append(new_clue)
 
-    def flip_blocked_symmetry(self, row, col):
+    def flip_blocked_symmetry(self, row, col, symmetry):
         self.__flip_blocked(row, col)
         target = self.__grid[row][col]
         
         other_cells = set()
-        if self.__symmetry == 2:
+        if symmetry == 2:
             other_cells.add((self.__GRID_SIZE-1-row, self.__GRID_SIZE-1-col))
             
-        if self.__symmetry == 4:
+        if symmetry == 4:
             other_cells.add((self.__GRID_SIZE-1-row, self.__GRID_SIZE-1-col))
             other_cells.add((col, self.__GRID_SIZE-1-row))
             other_cells.add((self.__GRID_SIZE-1-col, row))
@@ -86,9 +100,6 @@ class Grid:
         if target == None:
             if self.__grid[row][col] == EMPTY_CELL: target = BLOCKED_CELL
             elif self.__grid[row][col] == BLOCKED_CELL: target = EMPTY_CELL
-            
-        if target == BLOCKED_CELL: self.total_blocked += 1
-        if target == EMPTY_CELL: self.total_blocked -= 1
         self.__grid[row][col] = target
 
     def clues_containing_cell(self, row, col):
@@ -117,20 +128,12 @@ class Grid:
     
     def get_letter_in_cell(self, row, col):
         return self.__grid[row][col]
-    
-    def get_symmetry(self):
-        return self.__symmetry
-    
-    def set_symmetry(self, symmetry):
-        if symmetry not in [1, 2, 4]: raise Exception("invalid symmetry")
-        self.__symmetry = symmetry
-    
+
     def get_numbered_cells(self):
         return self.__numbered_cells
 
     def empty_grid(self):
         self.__grid = [[EMPTY_CELL]*self.__GRID_SIZE for _ in range(self.__GRID_SIZE)]
-        self.total_blocked = 0
         self.__update_clues()
         
     def clear_grid(self):
