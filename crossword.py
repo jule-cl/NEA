@@ -5,7 +5,7 @@ from copy import deepcopy
 from itertools import product
 import json
 
-from clue import Clue
+from cw_clue import CW_Clue
 
 class Crossword:
     def __init__(self, grid_size):
@@ -75,7 +75,7 @@ class Crossword:
                     current_row += d_row
                     current_col += d_col
                     
-                new_clue = Clue(self, cell_row, cell_col, d, length, word)
+                new_clue = CW_Clue(self, cell_row, cell_col, d, length, word)
                 self.__all_clues.append(new_clue)
 
     def flip_blocked_symmetry(self, row, col, symmetry):
@@ -120,6 +120,9 @@ class Crossword:
     
     def get_grid(self):
         return self.__grid
+    
+    def get_all_clues(self):
+        return self.__all_clues
     
     def set_grid(self, grid):
         if len(grid) != self.__GRID_SIZE: raise Exception("something's wrong")

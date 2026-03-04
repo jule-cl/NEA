@@ -1,6 +1,5 @@
 # pqueue.py
 
-
 class PQueue:
     def __init__(self):
         self.queue = []
@@ -16,7 +15,7 @@ class PQueue:
         return (i-1)//2
     
     def __get_node_at_index(self, i):
-        return self.queue[i] if i else None
+        return self.queue[i] if i!=None and 0<=i<=len(self.queue)-1 else None
     
     def get_root(self):
         if len(self.queue) == 0: return None
@@ -56,11 +55,11 @@ class PQueue:
         self.queue.append(node)
         
         current_index = len(self.queue)-1
-        while True:
+        while current_index != 0:
             index_p = self.__get_parent_index(current_index)
             parent = self.__get_node_at_index(index_p)
             
-            if parent and parent.score > self.queue[current_index].score:
+            if parent and (parent.score > self.queue[current_index].score):
                 self.queue[current_index], self.queue[index_p] = self.queue[index_p], self.queue[current_index]
                 current_index = index_p
                 continue
@@ -69,3 +68,7 @@ class PQueue:
 
     def has_node(self, node):
         return node in self.queue
+
+    ## DEBUGGING
+    def print_scores(self):
+        print(' '.join([str(node.score) for node in self.queue]))

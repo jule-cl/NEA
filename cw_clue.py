@@ -3,29 +3,34 @@ from word_funcs import Word_Funcs
 from app_settings import *
 
 class CW_Clue:
-    def __init__(self, row, col, direction, length, cells, parent_grid):
+    def __init__(self, parent_grid, row, col, direction, length, word=""):
         self.row = row
         self.col = col
         self.direction = direction
-        self.length = length 
+        self.length = length
+        self.word = word if word else EMPTY_CELL*length
         self.parent_grid = parent_grid
         
-        self.cells = cells
         self.intersections = set()
         self.intersection_positions = []
         
+        if direction == 'A': d_row, d_col = 0, 1
+        if direction == 'D': d_row, d_col = 1, 0
+        self.cells = [(row+d_row*i, col+d_col*i) for i in range(length)]
+        
         self.attempts = 0
-        self.failed_words = []
+        self.used_words = set()
+        self.failed_words = set() # includes failed words
         
         self.score = inf
         
     def __get_regex(self):
-        return ''.join(['*' if (c:=self.parent_grid.grid[row][col])==EMPTY_CELL else c for (row, col) in self.cells])
+        return ''.join(['*' if c==EMPTY_CELL else c for c in self.word])
     
     def get_possible_words(self):
         regex = self.__get_regex()
         candidates = sorted([w for w in Word_Funcs.get_words_that_match(regex)], key=lambda w:Word_Funcs.get_word_score(w))
-        candidates = list(filter(lambda w: w not in self.parent_grid.used_words, candidates)) # filter out used words
+        candidates = list(filter(lambda w: w not in self.used_words, candidates)) # filter out used words
         candidates = list(filter(lambda w: w not in self.failed_words, candidates)) # filter out failed words
         return candidates
     
@@ -35,5 +40,13 @@ class CW_Clue:
         candidates = self.get_possible_words()
         if not candidates: self.score = 0
         elif len(candidates) == 1: self.score = 1
-        else: self.score = 20-self.length
+        else: self.score = Word_Funcs.get_word_score(candidates[0])
+        
+    def change_letter(self, row, col, letter):
+        position = (row-self.row) + (col-self.col)
+        self.word = self.word[:position] + letter + self.word[position+1:]
+
+    def other_direction(dir):
+        return 'A' if dir == 'D' else 'D'
+
         

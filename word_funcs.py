@@ -1,6 +1,7 @@
 # word_funcs.py
 
 from functools import cache
+from math import log
 import requests
 
 class Word_Funcs:
@@ -17,17 +18,17 @@ class Word_Funcs:
         for word in file.read().splitlines():
             word = word.upper()
             displayed = only_letters(word)
-            ALL_DISPLAYED.append(displayed)
             try:
                 DISPLAYED_TO_WORD[displayed] += [word]
             except KeyError:
                 DISPLAYED_TO_WORD[displayed] = [word]
+                ALL_DISPLAYED.append(displayed)
 
     LETTERS_BY_FREQUENCY = "ETAOINSRHDLUCMFYWGPBVKXQJZ"
     LETTER_FREQUENCIES = [12.02, 9.10, 8.12, 7.68, 7.31, 6.95, 6.28, 6.02, 5.92, 4.32, 3.98, 2.88, 2.71,
                         2.61, 2.30, 2.11, 2.09, 2.03, 1.82, 1.49, 1.11, 0.69, 0.17, 0.11, 0.10, 0.07]
     # https://pi.math.cornell.edu/~mec/2003-2004/cryptography/subs/frequencies.html
-    LETTER_SCORE = {l:s for l, s in zip(LETTERS_BY_FREQUENCY, LETTER_FREQUENCIES)}
+    LETTER_SCORE = {l:s/100 for l, s in zip(LETTERS_BY_FREQUENCY, LETTER_FREQUENCIES)}
     WORD_POP = {word: index+1 for index, word in enumerate(ALL_DISPLAYED)}
 
     # filtering method
@@ -44,9 +45,12 @@ class Word_Funcs:
     # uses popularity of word and the average letter frequency of the word
     @cache
     def get_word_score(word):
-        # word frequency * (non-letter characters e.g. spaces, hyphens)
-        return Word_Funcs.WORD_POP[word]
-        # return Word_Funcs.WORD_POP[word] * (len(Word_Funcs.DISPLAYED_TO_WORD[word]) - len(word) + 1)
+        base = log(Word_Funcs.WORD_POP[word])+1 # popularity of the word
+        weight_a = len(word) # length of the word
+        weight_b = (len(Word_Funcs.DISPLAYED_TO_WORD[word]) - len(word) + 1) # non-letter characters e.g. spaces, hyphens
+        weight_c = sum([Word_Funcs.LETTER_SCORE[c] for c in word])/len(word) # average letter freqency: 0-1
+        
+        return 20-weight_a
 
     @cache
     def get_definition(word):
@@ -83,4 +87,5 @@ class Word_Funcs:
         return v
 
 if __name__ == '__main__':
-    print(Word_Funcs.displayed_to_word("and"))
+    for i in range(1, 30):
+        print(i, len([c for c in Word_Funcs.ALL_DISPLAYED if len(c)==i]))

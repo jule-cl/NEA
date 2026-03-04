@@ -5,6 +5,7 @@ from cw_autofill import Autofill
 from app_settings import *
 
 from crossword import Crossword
+from copy import deepcopy
 
 class CW_Model:
     def __init__(self, grid_size=None, grid_object=None):
@@ -67,9 +68,9 @@ class CW_Model:
             self.change_selection(next_r, next_c)
             
     def autofill(self, constraint):
-        filler = Autofill(self.__crossword.get_grid())
+        filler = Autofill(self.__crossword)
         solution = filler.fill(constraint)
-        if solution: self.__crossword.set_grid(solution); return True
+        if solution: self.__crossword = deepcopy(solution); return True
         return False
 
     # selection related methods

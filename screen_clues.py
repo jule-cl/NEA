@@ -79,7 +79,7 @@ class Clues_Info_Box(QWidget):
         self.actions_title.setStyleSheet(f"color: {Theme.FOREGROUND}; font-size: 18px; font-weight: bold;")
         # fill button (click to autofill)
         self.autofill_button = QPushButton("Autofill", self)
-        self.autofill_button.clicked.connect(lambda: self.cw_controller.autofill(constraint=5))
+        self.autofill_button.clicked.connect(lambda: self.cw_controller.autofill(constraint=5)) # TODO
         self.autofill_button.setStyleSheet(f"""
             QPushButton {{
                 background-color: {Theme.BUTTON_ACTION};
