@@ -61,7 +61,7 @@ class Crossword:
         self.__update_numbered_cells()
         
         self.__all_clues = []
-        for cell_row, cell_col, direction in self.__numbered_cells:
+        for index, (cell_row, cell_col, direction) in enumerate(self.__numbered_cells):
             for d in direction:
                 current_row, current_col = cell_row, cell_col
                 if d == 'A': d_row, d_col = 0, 1
@@ -75,7 +75,7 @@ class Crossword:
                     current_row += d_row
                     current_col += d_col
                     
-                new_clue = CW_Clue(self, cell_row, cell_col, d, length, word)
+                new_clue = CW_Clue(self, cell_row, cell_col, d, length, index+1, word)
                 self.__all_clues.append(new_clue)
 
     def flip_blocked_symmetry(self, row, col, symmetry):

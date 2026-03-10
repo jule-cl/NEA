@@ -22,6 +22,7 @@ TEXT_FONT = "Arial"
 GRID_SIZES = [11, 13, 15]
 BASE_SELECTION_OPTIONS = ["top-left", "top-right", "bottom-left", "bottom-right", "random"]
 SYMMETRY_OPTIONS = {"None":1, "2-fold":2, "4-fold":4}
+DIRECTION = {'A': 'across', 'D':'down'}
 
 IMAGE_PATHS = ["images/pic_a.png", "images/pic_b.png", "images/pic_c.png"]
 

@@ -3,11 +3,12 @@ from word_funcs import Word_Funcs
 from app_settings import *
 
 class CW_Clue:
-    def __init__(self, parent_grid, row, col, direction, length, word=""):
+    def __init__(self, parent_grid, row, col, direction, length, clue_number, word=""):
         self.row = row
         self.col = col
         self.direction = direction
         self.length = length
+        self.clue_number = clue_number
         self.word = word if word else EMPTY_CELL*length
         self.parent_grid = parent_grid
         

@@ -1,6 +1,6 @@
 # clues_screen.py
 
-from PyQt6.QtWidgets import QWidget, QLabel, QPushButton, QVBoxLayout
+from PyQt6.QtWidgets import QWidget, QLabel, QPushButton, QVBoxLayout, QTabWidget
 from PyQt6.QtCore import Qt, pyqtSignal, QPointF
 
 from widget_positioner import Widget_Positioner
@@ -62,74 +62,146 @@ class Clues_Info_Box(QWidget):
     def __init__(self, cw_controller):
         super().__init__()
         self.cw_controller = cw_controller
-        
-        self.setFixedWidth(int(WINDOW_W*0.35))
-        self.setFixedHeight(int(WINDOW_H*0.8))
-        
-        overall_layout = QVBoxLayout()
-        overall_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        overall_layout.setContentsMargins(15, 15, 15, 15)
-        self.setLayout(overall_layout)      
-        
-        # section 1 (actions)
-        actions_layout = QVBoxLayout()
-        actions_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        # title
-        self.actions_title = QLabel("Clues Tools")
-        self.actions_title.setStyleSheet(f"color: {Theme.FOREGROUND}; font-size: 18px; font-weight: bold;")
-        # fill button (click to autofill)
-        self.autofill_button = QPushButton("Autofill", self)
-        self.autofill_button.clicked.connect(lambda: self.cw_controller.autofill(constraint=5)) # TODO
-        self.autofill_button.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {Theme.BUTTON_ACTION};
-            }}
-            QPushButton:disabled {{
-                background-color: {Theme.BUTTON_DISABLED}
-            }}
-        """)
-        # empty button (click to empty grid)
-        self.clear_button = QPushButton("Clear words", self)
-        self.clear_button.clicked.connect(self.cw_controller.clear_grid)
-        self.clear_button.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {Theme.BUTTON_ACTION};
-            }}
-            QPushButton:disabled {{
-                background-color: {Theme.BUTTON_DISABLED}
-            }}
-        """)
-        # put in overall layout
-        actions_layout.addWidget(self.actions_title)
-        actions_layout.addWidget(self.autofill_button)
-        actions_layout.addWidget(self.clear_button)
-        overall_layout.addLayout(actions_layout)
-        
-        # section 2 (info)
-        info_layout = QVBoxLayout()
-        info_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        # current_clue_label
-        self.current_clue_label = QLabel("", self)
-        self.current_clue_label.setStyleSheet(f"color: {Theme.FOREGROUND}; font-size: 14px;")
-        
-        # add to overall layout
-        info_layout.addWidget(self.current_clue_label)
-        overall_layout.addLayout(info_layout)
 
-        # initialize stats when screen loads
+        self.setFixedWidth(int(WINDOW_W * 0.35))
+        self.setFixedHeight(int(WINDOW_H * 0.8))
+
+        overall_layout = QVBoxLayout()
+        overall_layout.setContentsMargins(15, 15, 15, 15)
+        self.setLayout(overall_layout)
+
+        # Create tab widget
+        self.tabs = QTabWidget()
+        overall_layout.addWidget(self.tabs)
+
+        # Create tabs
+        self.actions_tab = self.create_actions_tab()
+        self.clue_tab = self.create_clue_tab()
+        self.stats_tab = self.create_stats_tab()
+
+        # Add tabs
+        self.tabs.addTab(self.actions_tab, "Actions")
+        self.tabs.addTab(self.clue_tab, "Clue")
+        self.tabs.addTab(self.stats_tab, "Statistics")
+
+        self.tabs.setStyleSheet(f"""
+        QTabWidget::pane {{
+            border: 2px solid {Theme.FOREGROUND};
+            background: {Theme.CELL_BASE};
+        }}
+
+        QTabBar::tab {{
+            background: {Theme.CELL_BASE};
+            color: {Theme.FOREGROUND};
+            padding: 8px 18px;
+            border: 1px solid {Theme.FOREGROUND};
+            border-bottom: none;
+            border-top-left-radius: 6px;
+            border-top-right-radius: 6px;
+        }}
+
+        QTabBar::tab:selected {{
+            background: {Theme.SECONDARY_BACKGROUND};
+            color: white;
+            font-weight: bold;
+        }}
+
+        QTabBar::tab:hover {{
+            background: {Theme.SELECTED_CELL};
+        }}
+
+        QTabBar::tab:!selected {{
+            margin-top: 3px;
+        }}
+        """)
+
         self.update()
         
     def update(self):
-        selected_clue = self.cw_controller.get_selected_clue()
-        if not selected_clue:
-            text = "N/A"
-        else:
-            clue_word = selected_clue.word
-            words = Word_Funcs.displayed_to_word(clue_word)
-            if not words: text = clue_word
-            else: text = '\n'.join(words)
-        self.current_clue_label.setText(text)
-        
-        # update buttons
+        # actions tab
         self.autofill_button.setEnabled(self.cw_controller.is_grid_clear())
         self.clear_button.setEnabled(not self.cw_controller.is_grid_clear())
+        
+        # clue tab
+        selected_clue = self.cw_controller.get_selected_clue()
+        # current clue and word
+        word = "Selected word: "
+        clue = "Selected clue: "
+        if not selected_clue:
+            clue += "N/A"
+            word += "N/A"
+        else:
+            clue += f"{selected_clue.clue_number} {DIRECTION[selected_clue.direction]}"
+            word += f"{selected_clue.word} ({selected_clue.length})"
+            
+        self.__current_clue_label.setText(clue)
+        self.__current_word_label.setText(word)
+
+        
+    def create_actions_tab(self):
+        tab = QWidget()
+        layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        tab.setLayout(layout)
+
+        title = QLabel("Clue Tools")
+        title.setStyleSheet(f"color: {Theme.FOREGROUND}; font-size: 18px; font-weight: bold;")
+
+        self.autofill_button = QPushButton("Autofill")
+        self.autofill_button.clicked.connect(
+            lambda: self.cw_controller.autofill(constraint=5)
+        )
+
+        self.clear_button = QPushButton("Clear words")
+        self.clear_button.clicked.connect(self.cw_controller.clear_grid)
+
+        button_style = f"""
+            QPushButton {{
+                background-color: {Theme.BUTTON_ACTION};
+            }}
+            QPushButton:disabled {{
+                background-color: {Theme.BUTTON_DISABLED};
+            }}
+        """
+
+        self.autofill_button.setStyleSheet(button_style)
+        self.clear_button.setStyleSheet(button_style)
+
+        layout.addWidget(title)
+        layout.addWidget(self.autofill_button)
+        layout.addWidget(self.clear_button)
+
+        return tab
+    
+    def create_clue_tab(self):
+        tab = QWidget()
+        layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        tab.setLayout(layout)
+
+        self.__current_clue_label = QLabel("")
+        self.__current_word_label = QLabel("")
+        self.all_labels = [self.__current_clue_label, self.__current_word_label]
+        
+        for label in self.all_labels:
+            label.setStyleSheet(
+                f"color: {Theme.FOREGROUND}; font-size: 18px;"
+            )
+            layout.addWidget(label)
+
+        return tab
+        
+    def create_stats_tab(self):
+        tab = QWidget()
+        layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        tab.setLayout(layout)
+
+        self.stats_label = QLabel("Statistics will go here")
+        self.stats_label.setStyleSheet(
+            f"color: {Theme.FOREGROUND}; font-size: 14px;"
+        )
+
+        layout.addWidget(self.stats_label)
+
+        return tab

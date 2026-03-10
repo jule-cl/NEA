@@ -119,6 +119,7 @@ class Layout_Info_Box(QWidget):
                 selection-color: {Theme.FOREGROUND};
             }}
         """) 
+        self.base_selection.currentIndexChanged.connect(self.update)
         # symmetry options
         self.symmetry_options = QComboBox()
         self.symmetry_options.addItems(SYMMETRY_OPTIONS.keys()) 
@@ -151,6 +152,7 @@ class Layout_Info_Box(QWidget):
                 selection-color: {Theme.FOREGROUND};
             }}
         """) 
+        self.symmetry_options.currentIndexChanged.connect(self.update)
         # fill button (next to dropdown)
         self.fill_button = QPushButton("Generate", self)
         self.fill_button.clicked.connect(self.generate_layout)
@@ -268,6 +270,10 @@ class Layout_Info_Box(QWidget):
         self.stat_open_count.setText(f"Open cells: {open_cells}")
         self.stat_block_ratio.setText(f"Blocked ratio: {ratio:.2%}")
         
+        # symmetry contradictions
+        contradicts = (self.base_selection.currentText() in ["top-right", "bottom-left"])
+        contradicts &= (self.symmetry_options.currentText() == "4-fold")
+        
         # update buttons
-        self.fill_button.setEnabled(self.cw_controller.is_grid_empty())
+        self.fill_button.setEnabled(self.cw_controller.is_grid_empty() and not contradicts)
         self.empty_button.setEnabled(not self.cw_controller.is_grid_empty())
