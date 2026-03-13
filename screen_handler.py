@@ -7,12 +7,13 @@ from screen_creation import Creation_Screen
 from screen_layout import Layout_Screen
 from screen_clues import Clues_Screen
 from screen_saved import Saved_Screen
+from crossword import Crossword
 
 from functools import partial
 
 from app_settings import *
 
-class Main_Window(QMainWindow):
+class Screen_Handler(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Crossword Generator")
@@ -31,14 +32,20 @@ class Main_Window(QMainWindow):
         match screen: 
             case "title":
                 self.current_screen = Title_Screen(lambda: self.goto_screen("create"), lambda: self.goto_screen("saved"))
+                if data: Crossword.save(data[0])
             case "create":
                 self.current_screen = Creation_Screen(lambda: self.goto_screen("title"), partial(self.goto_screen, "layout"))
             case "layout":
-                self.current_screen = Layout_Screen(data[0], lambda: self.goto_screen("title"), partial(self.goto_screen, "clues"))
+                # receiving (grid_size, title)
+                self.current_screen = Layout_Screen(data[0], data[1], lambda: self.goto_screen("title"), partial(self.goto_screen, "clues"))
             case "clues":
-                self.current_screen = Clues_Screen(data[0], lambda: self.goto_screen("title"))
+                # receiving (grid object) -- can be from screen_saved (loading a crossword), or from screen_layout
+                self.current_screen = Clues_Screen(data[0], partial(self.goto_screen, "title"))
             case "saved":
-                self.current_screen = Saved_Screen(lambda: self.goto_screen("title"))
+                self.current_screen = Saved_Screen(
+                    lambda: self.goto_screen("title"),
+                    lambda filepath: self.goto_screen("clues", Crossword.load(filepath))
+                )
             case _:
                 raise ValueError(f"Unknown screen: {screen}")
             

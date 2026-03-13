@@ -26,6 +26,11 @@ DIRECTION = {'A': 'across', 'D':'down'}
 
 IMAGE_PATHS = ["images/pic_a.png", "images/pic_b.png", "images/pic_c.png"]
 
+# saving crosswords
+SAVED_FOLDER = "saved_crosswords"
+SAVED_INDEX_PATH = "saved_crosswords/index.json"
+CARDS_PER_ROW = 3
+
 class CW_MODE:
     LAYOUT = "layout"
     CLUES = "clues"
@@ -42,4 +47,4 @@ class Theme:
     
     BUTTON_ACTION = "#261b26"
     BUTTON_DISABLED = "#cccccc"
-    # BUTTON_HOVER = "#005a9e"
+    BUTTON_HOVER = "#333333"

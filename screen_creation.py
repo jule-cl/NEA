@@ -1,9 +1,10 @@
 # creation_screen.py
 
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit
 from PyQt6.QtCore import Qt
 from clickable_image import Clickable_Image
 from widget_positioner import Widget_Positioner
+from button import Button
 from app_settings import *
 
 class Creation_Screen(QWidget):
@@ -56,28 +57,18 @@ class Creation_Screen(QWidget):
         layout.addWidget(self.title_input, alignment=Qt.AlignmentFlag.AlignCenter)
 
         # continue button
-        self.continue_button = QPushButton("Continue")
+        self.continue_button = Button("Continue")
         self.continue_button.setEnabled(False)
-        self.continue_button.clicked.connect(lambda: goto_layout_screen(self.selected_grid_size))
+        self.continue_button.clicked.connect(lambda: goto_layout_screen(self.selected_grid_size, self.title_text))
         self.continue_button.setFixedWidth(200)
-        self.continue_button.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {Theme.BUTTON_ACTION};
-            }}
-            QPushButton:disabled {{
-                background-color: {Theme.BUTTON_DISABLED}
-            }}
-        """)
         
         layout.addWidget(self.continue_button, alignment=Qt.AlignmentFlag.AlignCenter)
         layout.addStretch()
         
         # back button
-        back_button = QPushButton("Back", self)
-        back_button.setEnabled(True)
+        back_button = Button("Back", self)
         back_button.clicked.connect(goto_title_screen)
         back_button.setFixedWidth(200)
-        back_button.setStyleSheet(f"background-color: {Theme.BUTTON_ACTION};")
         
         self.show()
         self.setLayout(layout)

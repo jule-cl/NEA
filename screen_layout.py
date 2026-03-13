@@ -1,9 +1,10 @@
 # layout_screen.py
 
-from PyQt6.QtWidgets import QWidget, QLabel, QPushButton, QVBoxLayout, QComboBox, QHBoxLayout
+from PyQt6.QtWidgets import QWidget, QLabel, QVBoxLayout, QComboBox, QHBoxLayout
 from PyQt6.QtCore import Qt, pyqtSignal, QPointF
 
 from widget_positioner import Widget_Positioner
+from button import Button
 from cw_model import CW_Model
 from cw_view import CW_View
 from cw_controller import CW_Controller
@@ -13,12 +14,12 @@ class Layout_Screen(QWidget):
     mouse_clicked = pyqtSignal(QPointF)
     key_pressed = pyqtSignal(int)
     
-    def __init__(self, grid_size, back_to_title, go_next):
+    def __init__(self, grid_size, crossword_title, back_to_title, go_to_clues):
         super().__init__()
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         
         # MVC setup
-        self.cw_model = CW_Model(grid_size=grid_size) # model 
+        self.cw_model = CW_Model(grid_size=grid_size, title=crossword_title) # model 
         self.cw_view = CW_View(self.cw_model) # view -> reference to model
         self.cw_view.setParent(self)
         self.cw_view.setFocusPolicy(Qt.FocusPolicy.NoFocus)
@@ -34,13 +35,11 @@ class Layout_Screen(QWidget):
         self.info_box.setParent(self)
         self.cw_controller.update_info.connect(self.info_box.update)
         # leave
-        leave_button = QPushButton("Back to Menu", self)
-        leave_button.setStyleSheet(f"background-color: {Theme.FOREGROUND};")
+        leave_button = Button("Back to Menu", self)
         leave_button.clicked.connect(back_to_title)
         # next
-        next_button = QPushButton("Go next", self)
-        next_button.setStyleSheet(f"background-color: {Theme.FOREGROUND};")
-        next_button.clicked.connect(lambda: go_next(self.cw_model.get_grid_object()))
+        next_button = Button("Go next", self)
+        next_button.clicked.connect(lambda: go_to_clues(self.cw_model.get_crossword_object()))
         
         self.cw_controller.draw() # puts crossword grid onto view
         self.show() # the elements don't have a width/height before they are on the screen, so show() first
@@ -154,33 +153,16 @@ class Layout_Info_Box(QWidget):
         """) 
         self.symmetry_options.currentIndexChanged.connect(self.update)
         # fill button (next to dropdown)
-        self.fill_button = QPushButton("Generate", self)
+        self.fill_button = Button("Generate", self)
         self.fill_button.clicked.connect(self.generate_layout)
-        self.fill_button.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {Theme.BUTTON_ACTION};
-            }}
-            QPushButton:disabled {{
-                background-color: {Theme.BUTTON_DISABLED}
-            }}
-        """)
         self.generate_layout_layout.addWidget(self.base_selection)
         self.generate_layout_layout.addWidget(self.symmetry_options)
         self.generate_layout_layout.addWidget(self.fill_button)
         # empty button (click to empty grid)
-        self.empty_button = QPushButton("Empty grid", self)
+        self.empty_button = Button("Empty grid", self)
         self.empty_button.clicked.connect(self.cw_controller.empty_grid)
-        self.empty_button.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {Theme.BUTTON_ACTION};
-            }}
-            QPushButton:disabled {{
-                background-color: {Theme.BUTTON_DISABLED}
-            }}
-        """)
         # errors button
-        self.errors_button = QPushButton("Check/Show errors", self)
-        self.errors_button.setStyleSheet(f"background-color: {Theme.BUTTON_ACTION}")
+        self.errors_button = Button("Check/Show errors", self)
         # put in overall layout
         actions_layout.addWidget(self.actions_title)
         actions_layout.addLayout(self.generate_layout_layout)

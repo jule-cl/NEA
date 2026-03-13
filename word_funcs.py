@@ -83,7 +83,7 @@ class Word_Funcs:
         try:
             v = Word_Funcs.DISPLAYED_TO_WORD[displayed]
         except KeyError:
-            v = []
+            v = [displayed]
         return v
 
 if __name__ == '__main__':

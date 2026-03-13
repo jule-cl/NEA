@@ -8,18 +8,18 @@ from crossword import Crossword
 from copy import deepcopy
 
 class CW_Model:
-    def __init__(self, grid_size=None, grid_object=None):
+    def __init__(self, grid_size=None, title=None, crossword_object=None):
         """
         if grid_size is passed, an empty grid of that size will be initialised
         if a grid object is passed, that object will be used
         """
         
-        if (not grid_size and not grid_object) or (grid_size and grid_object): 
+        if (not grid_size and not crossword_object) or (grid_size and crossword_object): 
             raise Exception("Need to pass either a grid size or a Grid object")
         
         # initialise self.__grid
-        if grid_object: self.__crossword = grid_object
-        else: self.__crossword = Crossword(grid_size)
+        if crossword_object: self.__crossword = crossword_object
+        else: self.__crossword = Crossword(grid_size, title)
         
         self.__GRID_SIZE = self.__crossword.get_grid_size()
         
@@ -129,7 +129,7 @@ class CW_Model:
     def get_grid_size(self):
         return self.__GRID_SIZE
     
-    def get_grid_object(self):
+    def get_crossword_object(self):
         return self.__crossword
     
     def get_grid(self):

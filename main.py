@@ -2,17 +2,14 @@
 
 import sys
 from PyQt6.QtWidgets import QApplication
-from main_window import Main_Window
+from screen_handler import Screen_Handler
 from app_settings import *
 
 if __name__ == '__main__':
 
     app = QApplication(sys.argv)
-    
-    with open("styling.qss") as f:
-        app.setStyleSheet(f.read())
-    
-    main_window = Main_Window()
+            
+    main_window = Screen_Handler()
     main_window.show()
     
     sys.exit(app.exec())

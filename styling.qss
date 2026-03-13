@@ -1,39 +1,26 @@
-QPushButton {
-            font-size: 14px;
-            color: {Theme.BACKGROUND};
-            border: none;
-            border-radius: 5px;
-            padding: 6px 8px;
-        }
-
-QFrame#CrosswordCard {
-    background-color: #2a2a2a;
-    border-radius: 10px;
-    padding: 12px;
-}
-
-QFrame#CrosswordCard:hover {
-    background-color: #333333;
-}
-
-QFrame#CrosswordCard QLabel#Title {
-    color: #ffffff;
-    font-size: 16px;
-    font-weight: bold;
-}
-
-QFrame#CrosswordCard QLabel#Meta {
-    color: #aaaaaa;
-    font-size: 11px;
-}
-
-QFrame#CrosswordCard QPushButton {
-    background-color: #3a3a3a;
-    color: #eeeeee;
+QComboBox {
+    color: BG_COLOR;
+    background-color: FG_COLOR;
+    padding: 5px;
+    border: 2px solid FG_COLOR;
     border-radius: 6px;
-    padding: 6px 10px;
 }
-
-QFrame#CrosswordCard QPushButton:hover {
-    background-color: #4a4a4a;
+QComboBox::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+    width: 25px;
+    border-left: 1px solid BG_COLOR;
+}
+QComboBox::down-arrow {
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid BG_COLOR;
+}
+QComboBox QAbstractItemView {
+    color: BG_COLOR;
+    background-color: FG_COLOR;
+    selection-background-color: BG_COLOR;
+    selection-color: FG_COLOR;
 }

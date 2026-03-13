@@ -1,9 +1,10 @@
 # clues_screen.py
 
-from PyQt6.QtWidgets import QWidget, QLabel, QPushButton, QVBoxLayout, QTabWidget
+from PyQt6.QtWidgets import QWidget, QLabel, QVBoxLayout, QTabWidget
 from PyQt6.QtCore import Qt, pyqtSignal, QPointF
 
 from widget_positioner import Widget_Positioner
+from button import Button
 from cw_model import CW_Model
 from cw_view import CW_View
 from cw_controller import CW_Controller
@@ -15,12 +16,12 @@ class Clues_Screen(QWidget):
     mouse_clicked = pyqtSignal(QPointF)
     key_pressed = pyqtSignal(int)
     
-    def __init__(self, grid, go_back):
+    def __init__(self, grid, back_to_menu):
         super().__init__()
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
 
         # MVC setup
-        self.cw_model = CW_Model(grid_object=grid)
+        self.cw_model = CW_Model(crossword_object=grid)
         self.cw_view = CW_View(self.cw_model)
         self.cw_view.setParent(self)
         self.cw_view.setFocusPolicy(Qt.FocusPolicy.NoFocus)
@@ -36,9 +37,8 @@ class Clues_Screen(QWidget):
         info_box.setParent(self)
         self.cw_controller.update_info.connect(info_box.update)
         # leave
-        leave_button = QPushButton("Save and back to Menu", self)
-        leave_button.setStyleSheet(f"background-color: {Theme.FOREGROUND}; color: {Theme.BACKGROUND}")
-        leave_button.clicked.connect(go_back)
+        leave_button = Button("Save and back to Menu", self)
+        leave_button.clicked.connect(lambda: back_to_menu(self.cw_model.get_crossword_object()))
 
         self.cw_controller.draw()
         self.show()
@@ -132,7 +132,7 @@ class Clues_Info_Box(QWidget):
             word += "N/A"
         else:
             clue += f"{selected_clue.clue_number} {DIRECTION[selected_clue.direction]}"
-            word += f"{selected_clue.word} ({selected_clue.length})"
+            word += f"{Word_Funcs.displayed_to_word(selected_clue.word)[0]} ({selected_clue.length})"
             
         self.__current_clue_label.setText(clue)
         self.__current_word_label.setText(word)
@@ -147,25 +147,10 @@ class Clues_Info_Box(QWidget):
         title = QLabel("Clue Tools")
         title.setStyleSheet(f"color: {Theme.FOREGROUND}; font-size: 18px; font-weight: bold;")
 
-        self.autofill_button = QPushButton("Autofill")
-        self.autofill_button.clicked.connect(
-            lambda: self.cw_controller.autofill(constraint=5)
-        )
-
-        self.clear_button = QPushButton("Clear words")
+        self.autofill_button = Button("Autofill")
+        self.autofill_button.clicked.connect(lambda: self.cw_controller.autofill(constraint=5))
+        self.clear_button = Button("Clear words")
         self.clear_button.clicked.connect(self.cw_controller.clear_grid)
-
-        button_style = f"""
-            QPushButton {{
-                background-color: {Theme.BUTTON_ACTION};
-            }}
-            QPushButton:disabled {{
-                background-color: {Theme.BUTTON_DISABLED};
-            }}
-        """
-
-        self.autofill_button.setStyleSheet(button_style)
-        self.clear_button.setStyleSheet(button_style)
 
         layout.addWidget(title)
         layout.addWidget(self.autofill_button)

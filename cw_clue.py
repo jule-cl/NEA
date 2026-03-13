@@ -3,13 +3,14 @@ from word_funcs import Word_Funcs
 from app_settings import *
 
 class CW_Clue:
-    def __init__(self, parent_grid, row, col, direction, length, clue_number, word=""):
+    def __init__(self, parent_grid, row, col, direction, length, clue_number, word="", clue_sentence=""):
         self.row = row
         self.col = col
         self.direction = direction
         self.length = length
         self.clue_number = clue_number
         self.word = word if word else EMPTY_CELL*length
+        self.clue_sentence = clue_sentence
         self.parent_grid = parent_grid
         
         self.intersections = set()
@@ -19,10 +20,10 @@ class CW_Clue:
         if direction == 'D': d_row, d_col = 1, 0
         self.cells = [(row+d_row*i, col+d_col*i) for i in range(length)]
         
+        # used for autofill
         self.attempts = 0
         self.used_words = set()
         self.failed_words = set() # includes failed words
-        
         self.score = inf
         
     def __get_regex(self):

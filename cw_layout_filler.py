@@ -3,6 +3,7 @@
 # filling blocked cells in grid
 
 from itertools import product
+from random import randint, choice
 from copy import deepcopy
 from collections import deque
 from bitboard import Bitboard
@@ -67,13 +68,14 @@ class Crossword_Layout:
     GENERATION RELATED
     """
     # TODO, still tweaking
-    def generate_layout(self, target_ratio, seed, symmetry):
-        from random import randint
-        if seed == None: seed = randint(0, 3)
+    def generate_layout(self, target_ratio, base, symmetry):
+        if base == None: 
+            if symmetry == 4: base = choice([0, 3]) # only top-left or bottom-right
+            else: base = randint(0, 3) # any base is fine
 
         # generate base
-        col_offset = int(seed & 1 == 1)+1
-        row_offset = int(seed & 2 == 2)+1
+        col_offset = int(base & 1 == 1)+1
+        row_offset = int(base & 2 == 2)+1
         
         for row in range(row_offset, self.__GRID_SIZE+1, 2):
             for col in range(col_offset, self.__GRID_SIZE+1, 2):
@@ -244,7 +246,7 @@ if __name__ == '__main__':
     ## empty/block ratio of 3.6 is fine
     filler = Crossword_Layout(size=9)
     
-    filler.generate_layout(symmetry=2, target_ratio=3.6, longest_word=13, seed=0)
+    filler.generate_layout(symmetry=2, target_ratio=3.6, longest_word=13, base=0)
     
     filler.print_grid()
     
