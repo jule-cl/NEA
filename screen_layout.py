@@ -1,10 +1,10 @@
 # layout_screen.py
 
-from PyQt6.QtWidgets import QWidget, QLabel, QVBoxLayout, QComboBox, QHBoxLayout
+from PyQt6.QtWidgets import QWidget, QLabel, QVBoxLayout, QHBoxLayout
 from PyQt6.QtCore import Qt, pyqtSignal, QPointF
 
 from widget_positioner import Widget_Positioner
-from button import Button
+from widges_custom import Button, ComboBox
 from cw_model import CW_Model
 from cw_view import CW_View
 from cw_controller import CW_Controller
@@ -87,70 +87,14 @@ class Layout_Info_Box(QWidget):
         self.generate_layout_layout = QHBoxLayout()
         self.generate_layout_layout.setSpacing(10)
         # base pattern selection
-        self.base_selection = QComboBox()
+        self.base_selection = ComboBox()
         self.base_selection.addItems(BASE_SELECTION_OPTIONS)
         self.base_selection.setCurrentIndex(3) # defaults to "bottom-right", as it is most common
-        self.base_selection.setStyleSheet(f"""
-            QComboBox {{
-                color: {Theme.BACKGROUND};
-                background-color: {Theme.FOREGROUND};
-                padding: 5px;
-                border: 2px solid {Theme.FOREGROUND};
-                border-radius: 6px;
-            }}
-            QComboBox::drop-down {{
-                subcontrol-origin: padding;
-                subcontrol-position: top right;
-                width: 25px;
-                border-left: 1px solid {Theme.BACKGROUND};
-            }}
-            QComboBox::down-arrow {{
-                width: 0;
-                height: 0;
-                border-left: 5px solid transparent;
-                border-right: 5px solid transparent;
-                border-top: 5px solid {Theme.BACKGROUND};
-            }}
-            QComboBox QAbstractItemView {{
-                color: {Theme.BACKGROUND};
-                background-color: {Theme.FOREGROUND};
-                selection-background-color: {Theme.BACKGROUND};
-                selection-color: {Theme.FOREGROUND};
-            }}
-        """) 
         self.base_selection.currentIndexChanged.connect(self.update)
         # symmetry options
-        self.symmetry_options = QComboBox()
+        self.symmetry_options = ComboBox()
         self.symmetry_options.addItems(SYMMETRY_OPTIONS.keys()) 
         self.symmetry_options.setCurrentIndex(1) # defaults to "2-fold", as it is most common  
-        self.symmetry_options.setStyleSheet(f"""
-            QComboBox {{
-                color: {Theme.BACKGROUND};
-                background-color: {Theme.FOREGROUND};
-                padding: 5px;
-                border: 2px solid {Theme.FOREGROUND};
-                border-radius: 6px;
-            }}
-            QComboBox::drop-down {{
-                subcontrol-origin: padding;
-                subcontrol-position: top right;
-                width: 25px;
-                border-left: 1px solid {Theme.BACKGROUND};
-            }}
-            QComboBox::down-arrow {{
-                width: 0;
-                height: 0;
-                border-left: 5px solid transparent;
-                border-right: 5px solid transparent;
-                border-top: 5px solid {Theme.BACKGROUND};
-            }}
-            QComboBox QAbstractItemView {{
-                color: {Theme.BACKGROUND};
-                background-color: {Theme.FOREGROUND};
-                selection-background-color: {Theme.BACKGROUND};
-                selection-color: {Theme.FOREGROUND};
-            }}
-        """) 
         self.symmetry_options.currentIndexChanged.connect(self.update)
         # fill button (next to dropdown)
         self.fill_button = Button("Generate", self)
@@ -185,42 +129,45 @@ class Layout_Info_Box(QWidget):
 
             QLabel#StatsTitle {{
                 color: {Theme.FOREGROUND};
-                font-size: 18px;
+                font-size: 20px;
                 font-weight: 600;
             }}
 
             QLabel#StatsLabel {{
                 color: {Theme.FOREGROUND};
-                font-size: 14px;
+                font-size: 18px;
             }}
         """)
 
         # title
         stats_title = QLabel("Layout Statistics")
         stats_title.setObjectName("StatsTitle")
-
         # labels
-        self.stat_block_ratio = QLabel()
-        self.stat_block_count = QLabel()
-        self.stat_open_count = QLabel()
-        self.stat_grid_size = QLabel()
-
-        for lbl in [
-            self.stat_block_ratio,
-            self.stat_block_count,
-            self.stat_open_count,
-            self.stat_grid_size
-        ]:
-            lbl.setObjectName("StatsLabel")
+        self.grid_size = QLabel()
+        self.blocked_empty = QLabel()
+        self.percentage_blocked = QLabel()
+        self.longest_length = QLabel()
+        self.common_length = QLabel()
+        self.average_length = QLabel()
+        self.no_of_words = QLabel()
+        self.checked_cells = QLabel()
+        all_labels = [
+            self.grid_size,
+            self.blocked_empty,
+            self.percentage_blocked,
+            self.longest_length,
+            self.common_length,
+            self.average_length,
+            self.no_of_words,
+            self.checked_cells
+        ]
 
         # add to layout
         info_layout.addWidget(stats_title)
         info_layout.addSpacing(10)
-        info_layout.addWidget(self.stat_block_ratio)
-        info_layout.addWidget(self.stat_block_count)
-        info_layout.addWidget(self.stat_open_count)
-        info_layout.addWidget(self.stat_grid_size)
-
+        for label in all_labels:
+            info_layout.addWidget(label)
+            label.setObjectName("StatsLabel")
         overall_layout.addWidget(info_container)
 
         # initialize stats when screen loads
@@ -237,25 +184,34 @@ class Layout_Info_Box(QWidget):
         return SYMMETRY_OPTIONS[self.symmetry_options.currentText()]
         
     def update(self):
-        grid = self.cw_controller.model.get_grid()
-        size = len(grid)
+        crossword = self.cw_controller.model.get_crossword_object()
+        size = crossword.get_grid_size()
 
         total = size * size
-        blocked = sum(cell == BLOCKED_CELL for row in grid for cell in row)
-        open_cells = total - blocked
-
+        blocked = crossword.get_blocked_cells_count()
+        empty = total - blocked
         ratio = blocked / total if total > 0 else 0
-
-        # fill labels
-        self.stat_grid_size.setText(f"Grid size: {size} * {size}")
-        self.stat_block_count.setText(f"Blocked cells: {blocked}")
-        self.stat_open_count.setText(f"Open cells: {open_cells}")
-        self.stat_block_ratio.setText(f"Blocked ratio: {ratio:.2%}")
+        
+        word_lengths = crossword.get_all_word_lengths()
+        no_of_words = sum(word_lengths.values())
+        average_word_length = sum([k*v for k, v in word_lengths.items()])/no_of_words
+        most_common_occurences = max(word_lengths.values())
+        most_common_lengths = ", ".join([str(k) for k, v in word_lengths.items() if v==most_common_occurences])
+        no_of_checked = crossword.get_checked_cells_count()
         
         # symmetry contradictions
         contradicts = (self.base_selection.currentText() in ["top-right", "bottom-left"])
         contradicts &= (self.symmetry_options.currentText() == "4-fold")
-        
         # update buttons
         self.fill_button.setEnabled(self.cw_controller.is_grid_empty() and not contradicts)
         self.empty_button.setEnabled(not self.cw_controller.is_grid_empty())
+
+        # fill labels
+        self.grid_size.setText(f"Grid size: {size} x {size}")
+        self.blocked_empty.setText(f"# of blocked/empty cells: {blocked}/{empty}")
+        self.percentage_blocked.setText(f"Blocked ratio: {ratio:.2%}")
+        self.longest_length.setText(f"Length of longest word: {max(word_lengths.keys())} ({word_lengths[max(word_lengths.keys())]})")
+        self.common_length.setText(f"Most common length(s): {most_common_lengths} ({most_common_occurences})")
+        self.average_length.setText(f"Average word length: {average_word_length:.2f}")
+        self.no_of_words.setText(f"# of words: {no_of_words}")
+        self.checked_cells.setText(f"# of checked cells: {no_of_checked}")

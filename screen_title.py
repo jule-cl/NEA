@@ -2,7 +2,7 @@
 
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel
 from PyQt6.QtCore import Qt
-from button import Button
+from widges_custom import Button
 from app_settings import *
 
 class Title_Screen(QWidget):

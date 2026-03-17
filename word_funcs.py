@@ -18,11 +18,8 @@ class Word_Funcs:
         for word in file.read().splitlines():
             word = word.upper()
             displayed = only_letters(word)
-            try:
-                DISPLAYED_TO_WORD[displayed] += [word]
-            except KeyError:
-                DISPLAYED_TO_WORD[displayed] = [word]
-                ALL_DISPLAYED.append(displayed)
+            ALL_DISPLAYED.append(displayed)
+            DISPLAYED_TO_WORD[displayed] = word
 
     LETTERS_BY_FREQUENCY = "ETAOINSRHDLUCMFYWGPBVKXQJZ"
     LETTER_FREQUENCIES = [12.02, 9.10, 8.12, 7.68, 7.31, 6.95, 6.28, 6.02, 5.92, 4.32, 3.98, 2.88, 2.71,
@@ -83,8 +80,25 @@ class Word_Funcs:
         try:
             v = Word_Funcs.DISPLAYED_TO_WORD[displayed]
         except KeyError:
-            v = [displayed]
+            v = displayed
         return v
+    
+    @cache
+    def get_clue_length(word):
+        clue_length = ""
+        section_length = 0
+        for char in word:
+            if char == '-':
+                clue_length += f"{section_length}-"
+                section_length = 0
+            elif char == ' ':
+                clue_length += f"{section_length}, "
+                section_length = 0
+            else:
+                section_length += 1
+        clue_length += str(section_length)
+                
+        return clue_length
 
 if __name__ == '__main__':
     for i in range(1, 30):

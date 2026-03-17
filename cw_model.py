@@ -43,12 +43,9 @@ class CW_Model:
         if self.__crossword.get_letter_in_cell(r, c) == BLOCKED_CELL: return # selected cell is blocked
         
         # set letters moved
-        if letter != EMPTY_CELL:
-            d = 1
-        elif self.__crossword.get_letter_in_cell(r, c) == EMPTY_CELL:
-            d = -1
-        else:
-            d = 0
+        if letter != EMPTY_CELL: d = 1
+        elif self.__crossword.get_letter_in_cell(r, c) == EMPTY_CELL: d = -1
+        else: d = 0
         
         if self.__selected_direction == 'A':
             next_r, next_c = r, c+d
@@ -60,9 +57,9 @@ class CW_Model:
             next_r, next_c = r, c # this means the selected cell should not be changed
         
         if letter == EMPTY_CELL:    
-            self.__crossword.change_letter(next_r, next_c, EMPTY_CELL) # delete letter in the current selected cell (for natural typing)
+            self.__crossword.change_letter(next_r, next_c, EMPTY_CELL, True) # delete letter in the current selected cell (for natural typing)
         else:    
-            self.__crossword.change_letter(r, c, letter) # delete letter in the current selected cell (for natural typing)
+            self.__crossword.change_letter(r, c, letter, True) # delete letter in the current selected cell (for natural typing)
             
         if (next_r != r) or (next_c !=c): 
             self.change_selection(next_r, next_c)
@@ -141,6 +138,9 @@ class CW_Model:
     def get_numbered_cells(self):
         return self.__crossword.get_numbered_cells()
     
+    def get_all_clues(self):
+        return self.__crossword.get_all_clues()
+    
     def empty_grid(self):
         self.__crossword.empty_grid()
         
@@ -154,7 +154,7 @@ class CW_Model:
         return self.__crossword.is_grid_clear()
 
     def __is_cell_corner(self, cell):
-        return self.__crossword.is_cell_corner(cell)
+        return self.__crossword.is_cell_checked(cell)
 
     def __is_cell_in_word(self, cell, direction):
         return self.__crossword.is_cell_in_word(cell, direction)

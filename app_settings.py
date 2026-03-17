@@ -23,6 +23,7 @@ GRID_SIZES = [11, 13, 15]
 BASE_SELECTION_OPTIONS = ["top-left", "top-right", "bottom-left", "bottom-right", "random"]
 SYMMETRY_OPTIONS = {"None":1, "2-fold":2, "4-fold":4}
 DIRECTION = {'A': 'across', 'D':'down'}
+CONSTRAINT_OPTIONS = [("Low", 3), ("Medium", 5), ("High", 8)]
 
 IMAGE_PATHS = ["images/pic_a.png", "images/pic_b.png", "images/pic_c.png"]
 
@@ -35,9 +36,12 @@ class CW_MODE:
     LAYOUT = "layout"
     CLUES = "clues"
     
+"""
+Class that defines colour which will be used throughout the program
+"""
 class Theme:
     BACKGROUND = "#e5fff6"
-    SECONDARY_BACKGROUND = "#695ee3"
+    SECONDARY_BACKGROUND = "#c4c7c6"
     FOREGROUND = "#261b26"
     BLOCKED_CELL = "#261b26"
     SELECTED_CELL =  "#f4f76a"

@@ -1,10 +1,10 @@
 # clues_screen.py
 
-from PyQt6.QtWidgets import QWidget, QLabel, QVBoxLayout, QTabWidget
+from PyQt6.QtWidgets import QWidget, QLabel, QVBoxLayout, QHBoxLayout, QGridLayout, QTabWidget, QScrollArea, QLineEdit
 from PyQt6.QtCore import Qt, pyqtSignal, QPointF
 
 from widget_positioner import Widget_Positioner
-from button import Button
+from widges_custom import Button, ComboBox
 from cw_model import CW_Model
 from cw_view import CW_View
 from cw_controller import CW_Controller
@@ -87,7 +87,7 @@ class Clues_Info_Box(QWidget):
         self.tabs.setStyleSheet(f"""
         QTabWidget::pane {{
             border: 2px solid {Theme.FOREGROUND};
-            background: {Theme.CELL_BASE};
+            background-color: red;
         }}
 
         QTabBar::tab {{
@@ -121,8 +121,6 @@ class Clues_Info_Box(QWidget):
         # actions tab
         self.autofill_button.setEnabled(self.cw_controller.is_grid_clear())
         self.clear_button.setEnabled(not self.cw_controller.is_grid_clear())
-        
-        # clue tab
         selected_clue = self.cw_controller.get_selected_clue()
         # current clue and word
         word = "Selected word: "
@@ -132,48 +130,108 @@ class Clues_Info_Box(QWidget):
             word += "N/A"
         else:
             clue += f"{selected_clue.clue_number} {DIRECTION[selected_clue.direction]}"
-            word += f"{Word_Funcs.displayed_to_word(selected_clue.word)[0]} ({selected_clue.length})"
-            
+            word += f"{Word_Funcs.displayed_to_word(selected_clue.word)} ({selected_clue.clue_length})"
         self.__current_clue_label.setText(clue)
         self.__current_word_label.setText(word)
-
         
+        # clue tab
+        for i, clue in enumerate(self.cw_controller.get_all_clues()):
+            offset = int(clue.direction == 'D')+1
+            self.__clue_grid.itemAtPosition(i+offset, 1).widget().setText(Word_Funcs.displayed_to_word(clue.word))
+            clue.clue_sentence = self.__clue_grid.itemAtPosition(i+offset, 2).widget().text()
+
     def create_actions_tab(self):
         tab = QWidget()
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        layout.setSpacing(12)
         tab.setLayout(layout)
 
         title = QLabel("Clue Tools")
         title.setStyleSheet(f"color: {Theme.FOREGROUND}; font-size: 18px; font-weight: bold;")
-
-        self.autofill_button = Button("Autofill")
-        self.autofill_button.clicked.connect(lambda: self.cw_controller.autofill(constraint=5))
-        self.clear_button = Button("Clear words")
-        self.clear_button.clicked.connect(self.cw_controller.clear_grid)
-
         layout.addWidget(title)
-        layout.addWidget(self.autofill_button)
+
+        # autofill row: button + constraint combobox
+        autofill_row = QHBoxLayout()
+        self.autofill_button = Button("Autofill")
+        self.autofill_button.clicked.connect(lambda: self.cw_controller.autofill(constraint=self.constraint_options.currentData()))
+        self.constraint_options = ComboBox()
+        for label, value in CONSTRAINT_OPTIONS:
+            self.constraint_options.addItem(label, value)
+        self.constraint_options.setCurrentIndex(1)  # default to 5
+        autofill_row.addWidget(self.autofill_button)
+        autofill_row.addWidget(self.constraint_options)
+        layout.addLayout(autofill_row)
+
+        # clear button below
+        self.clear_button = Button("Clear all words")
+        self.clear_button.clicked.connect(self.cw_controller.clear_grid)
         layout.addWidget(self.clear_button)
 
-        return tab
-    
-    def create_clue_tab(self):
-        tab = QWidget()
-        layout = QVBoxLayout()
-        layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        tab.setLayout(layout)
-
+        # selected clue + word labels
         self.__current_clue_label = QLabel("")
         self.__current_word_label = QLabel("")
-        self.all_labels = [self.__current_clue_label, self.__current_word_label]
-        
-        for label in self.all_labels:
-            label.setStyleSheet(
-                f"color: {Theme.FOREGROUND}; font-size: 18px;"
-            )
+        for label in [self.__current_clue_label, self.__current_word_label]:
+            label.setStyleSheet(f"color: {Theme.FOREGROUND}; font-size: 18px;")
             layout.addWidget(label)
 
+        return tab
+
+    def create_clue_tab(self):
+        tab = QWidget()
+        outer_layout = QVBoxLayout(tab)
+
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setStyleSheet("border: none;")
+
+        container = QWidget()
+        container.setStyleSheet(f"""
+            QLabel {{
+                border: 1px solid {Theme.FOREGROUND};
+                padding: 4px;
+            }}
+            QLineEdit {{
+                border: 1px solid {Theme.FOREGROUND};
+                padding: 4px;
+            }}
+        """)
+        self.__clue_grid = QGridLayout(container)
+        self.__clue_grid.setSpacing(0)
+        self.__clue_grid.setContentsMargins(0, 0, 0, 0)
+
+        # put each clue as a row
+        # across header
+        header = QLabel("Across")
+        header.setStyleSheet(f"color: {Theme.FOREGROUND}; font-weight: bold; font-size: 13px;")
+        self.__clue_grid.addWidget(header, 0, 0, 1, 3)
+        down_section = False
+        for i, clue in enumerate(self.cw_controller.get_all_clues()):
+            clue_number = QLabel(f"{clue.clue_number}")
+            clue_number.setStyleSheet(f"color: {Theme.FOREGROUND}; font-size: 13px;")
+
+            word_at_clue = QLabel(Word_Funcs.displayed_to_word(clue.word))
+            word_at_clue.setStyleSheet(f"color: {Theme.FOREGROUND}; font-size: 13px;")
+
+            sentence_input = QLineEdit()
+            sentence_input.setPlaceholderText("_"*10)
+            if clue.clue_sentence:
+                sentence_input.setText(clue.clue_sentence)
+            sentence_input.setStyleSheet(f"color: {Theme.FOREGROUND}")
+            sentence_input.textChanged.connect(self.update)
+
+            if clue.direction == 'D' and not down_section: 
+                down_section = True
+                header = QLabel("Down")
+                header.setStyleSheet(f"color: {Theme.FOREGROUND}; font-weight: bold; font-size: 13px;")
+                self.__clue_grid.addWidget(header, i+1, 0, 1, 3)
+                
+            self.__clue_grid.addWidget(clue_number, i+1+int(down_section), 0)
+            self.__clue_grid.addWidget(word_at_clue, i+1+int(down_section), 1)
+            self.__clue_grid.addWidget(sentence_input, i+1+int(down_section), 2)
+
+        scroll.setWidget(container)
+        outer_layout.addWidget(scroll)
         return tab
         
     def create_stats_tab(self):

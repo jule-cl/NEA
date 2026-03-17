@@ -2,7 +2,7 @@
 
 from PyQt6.QtWidgets import QWidget, QGridLayout, QVBoxLayout, QHBoxLayout, QLabel, QScrollArea, QFrame
 from PyQt6.QtCore import Qt
-from button import Button
+from widges_custom import Button
 import os, json
 from app_settings import *
 

@@ -35,16 +35,18 @@ class Crossword_Layout:
             self.__number_of_blocked_cells += 1
             
     def __flip_cell_sym(self, row, col, sym):
-        to_flip = set([(row, col)])
-        if sym == 2:
-            to_flip.add((self.__GRID_SIZE+1-row, self.__GRID_SIZE+1-col))
-        if sym == 4:
-            to_flip.add((self.__GRID_SIZE+1-row, self.__GRID_SIZE+1-col))
-            to_flip.add((col, self.__GRID_SIZE+1-row))
-            to_flip.add((self.__GRID_SIZE+1-col, row))
-            
-        for t_row, t_col in to_flip:
+        for t_row, t_col in self.__get_cells_in_sym(row, col, sym):
             self.__flip_cell(t_row, t_col)
+
+    def __get_cells_in_sym(self, row, col, sym):
+        cells = set([(row, col)])
+        if sym == 2:
+            cells.add((self.__GRID_SIZE+1-row, self.__GRID_SIZE+1-col))
+        if sym == 4:
+            cells.add((self.__GRID_SIZE+1-row, self.__GRID_SIZE+1-col))
+            cells.add((col, self.__GRID_SIZE+1-row))
+            cells.add((self.__GRID_SIZE+1-col, row))
+        return cells
 
     def empty_grid(self):
         self.__grid = [[BLOCKED_CELL]*(self.__GRID_SIZE+2) if row == 0 or row == self.__GRID_SIZE+1
@@ -108,7 +110,7 @@ class Crossword_Layout:
             
             if not self.__grid_valid():
                 self.__flip_cell_sym(t_row, t_col, symmetry)
-                banned_cells.append((t_row, t_col))
+                banned_cells += self.__get_cells_in_sym(t_row, t_col, symmetry)
                 
         return [row[1:-1] for row in self.__grid[1:-1]]
            

@@ -6,12 +6,14 @@ class CW_Clue:
     def __init__(self, parent_grid, row, col, direction, length, clue_number, word="", clue_sentence=""):
         self.row = row
         self.col = col
-        self.direction = direction
+        self.direction = direction # 'A' or 'D'
         self.length = length
-        self.clue_number = clue_number
+        self.clue_length = str(length) # this is what is displayed e.g. (4, 7)
+        self.clue_number = clue_number # int
         self.word = word if word else EMPTY_CELL*length
         self.clue_sentence = clue_sentence
         self.parent_grid = parent_grid
+        self.__update_clue_length()
         
         self.intersections = set()
         self.intersection_positions = []
@@ -44,9 +46,13 @@ class CW_Clue:
         elif len(candidates) == 1: self.score = 1
         else: self.score = Word_Funcs.get_word_score(candidates[0])
         
-    def change_letter(self, row, col, letter):
+    def change_letter(self, row, col, letter, update_length=False):
         position = (row-self.row) + (col-self.col)
         self.word = self.word[:position] + letter + self.word[position+1:]
+        if update_length: self.__update_clue_length()
+        
+    def __update_clue_length(self):
+        self.clue_length = Word_Funcs.get_clue_length(Word_Funcs.displayed_to_word(self.word))
 
     def other_direction(dir):
         return 'A' if dir == 'D' else 'D'

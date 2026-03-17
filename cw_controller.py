@@ -82,6 +82,9 @@ class CW_Controller(QObject): # make this a QObject so it can emit pyqtsingals
     def clear_grid(self):
         self.model.clear_grid()
         self.draw()
+      
+    def get_all_clues(self):
+        return self.model.get_all_clues()
         
     def get_selected_clue(self):
         return self.model.get_selected_clue()

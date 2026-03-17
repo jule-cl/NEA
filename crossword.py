@@ -26,8 +26,8 @@ class Crossword:
         self.empty_grid()
 
         self.__numbered_cells = [] # (row, col, direction)
-        self.__update_clues()
         self.__all_clues = []
+        self.__update_clues()
 
     # saving / loading
     def save(self):
@@ -84,10 +84,11 @@ class Crossword:
             data = json.load(f)
         crossword = cls(data["grid_size"], data["title"], data["created_date"], data["filename"])
         crossword.set_grid(data["grid"])
+        crossword.__update_clues(data["clue_sentences"])
         return crossword
 
     def __clue_sentences_to_dict(self):
-        sentences_dict = {'A': {}, 'D':{}}
+        sentences_dict = {'A': {}, 'D': {}}
         for clue in self.__all_clues:
             sentences_dict[clue.direction][clue.clue_number] = clue.clue_sentence
         return sentences_dict
@@ -111,11 +112,15 @@ class Crossword:
             if direction: self.__numbered_cells.append((row, col, direction))
             
     def __update_clues(self, sentences=None): # done after layout is confirmed, and always updates numbered cells
+        # all_clues is ordered by accross asc, then down asc
         self.__update_numbered_cells()
         
         self.__all_clues = []
+        across = []
+        down = []
+        
         for index, (cell_row, cell_col, direction) in enumerate(self.__numbered_cells):
-            clue_number = index+1 # the actual clue number is +1 becase indices start at 0
+            clue_number = index+1 # the actual clue number is +1 because indices start at 0
             
             for d in direction:
                 current_row, current_col = cell_row, cell_col
@@ -133,11 +138,14 @@ class Crossword:
                 # find sentence if exists
                 clue_sentence = ""
                 if sentences:
-                    if clue_number in sentences[d].keys():
-                        clue_sentence = sentences[d][clue_number]
+                    if str(clue_number) in sentences[d].keys():
+                        clue_sentence = sentences[d][str(clue_number)]
                     
                 new_clue = CW_Clue(self, cell_row, cell_col, d, length, clue_number, word, clue_sentence)
-                self.__all_clues.append(new_clue)
+                if d == 'A': across.append(new_clue)
+                if d == 'D': down.append(new_clue)
+                
+        self.__all_clues = across + down
 
     def flip_blocked_symmetry(self, row, col, symmetry):
         self.__flip_blocked(row, col)
@@ -170,10 +178,10 @@ class Crossword:
         return clues
 
     # editing words
-    def change_letter(self, row, col, letter):
+    def change_letter(self, row, col, letter, update_lengths=True):
         self.__grid[row][col] = letter
         for clue in self.clues_containing_cell(row, col):
-            clue.change_letter(row, col, letter)
+            clue.change_letter(row, col, letter, update_lengths)
 
     # general getters and setters and checks
     def get_grid_size(self):
@@ -196,6 +204,21 @@ class Crossword:
     def get_numbered_cells(self):
         return self.__numbered_cells
 
+    def get_blocked_cells_count(self):
+        return sum(cell == BLOCKED_CELL for row in self.__grid for cell in row)
+
+    def get_checked_cells_count(self):
+        return sum([self.is_cell_checked((row, col)) for row in range(self.__GRID_SIZE) for col in range(self.__GRID_SIZE)])
+
+    def get_all_word_lengths(self):
+        word_lengths = {}
+        for clue in self.__all_clues:
+            if clue.length not in word_lengths.keys():
+                word_lengths[clue.length] = 1
+            else:
+                word_lengths[clue.length] += 1
+        return word_lengths
+
     def empty_grid(self):
         self.__grid = [[EMPTY_CELL]*self.__GRID_SIZE for _ in range(self.__GRID_SIZE)]
         self.__update_clues()
@@ -217,7 +240,7 @@ class Crossword:
                 if not(cell == EMPTY_CELL or cell == BLOCKED_CELL): return False
         return True
 
-    def is_cell_corner(self, cell):
+    def is_cell_checked(self, cell):
         return self.is_cell_in_word(cell, 'A') and self.is_cell_in_word(cell, 'D')
 
     def is_cell_in_word(self, cell, dir):
