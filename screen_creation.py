@@ -4,8 +4,8 @@ from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit
 from PyQt6.QtCore import Qt
 from clickable_image import Clickable_Image
 from widget_positioner import Widget_Positioner
-from widges_custom import Button
-from app_settings import *
+from widgets_custom import Button
+from app_info import *
 
 class Creation_Screen(QWidget):
     def __init__(self, goto_title_screen, goto_layout_screen):

@@ -2,8 +2,8 @@
 
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel
 from PyQt6.QtCore import Qt
-from widges_custom import Button
-from app_settings import *
+from widgets_custom import Button
+from app_info import *
 
 class Title_Screen(QWidget):
     def __init__(self, goto_creation, goto_saved):

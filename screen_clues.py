@@ -4,11 +4,11 @@ from PyQt6.QtWidgets import QWidget, QLabel, QVBoxLayout, QHBoxLayout, QGridLayo
 from PyQt6.QtCore import Qt, pyqtSignal, QPointF
 
 from widget_positioner import Widget_Positioner
-from widges_custom import Button, ComboBox
+from widgets_custom import Button, ComboBox
 from cw_model import CW_Model
 from cw_view import CW_View
 from cw_controller import CW_Controller
-from app_settings import *
+from app_info import *
 
 from word_funcs import Word_Funcs
 

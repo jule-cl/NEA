@@ -1,7 +1,7 @@
 # cw_controller.py
 
 from PyQt6.QtCore import QObject, Qt, pyqtSignal
-from app_settings import *
+from app_info import *
 
 class CW_Controller(QObject): # make this a QObject so it can emit pyqtsingals
     update_info = pyqtSignal()

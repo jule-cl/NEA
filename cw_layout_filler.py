@@ -7,7 +7,7 @@ from random import randint, choice
 from copy import deepcopy
 from collections import deque
 from bitboard import Bitboard
-from app_settings import *
+from app_info import *
 
 O_DIRECTIONS = [(1, 0), (-1, 0), (0, 1), (0, -1)]
 

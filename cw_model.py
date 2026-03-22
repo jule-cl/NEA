@@ -2,7 +2,7 @@
 
 from cw_layout_filler import Crossword_Layout
 from cw_autofill import Autofill
-from app_settings import *
+from app_info import *
 
 from crossword import Crossword
 from copy import deepcopy

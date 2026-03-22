@@ -1,33 +1,25 @@
 # word_funcs.py
 
 from functools import cache
-from math import log
+import json
+from app_info import *
 import requests
 
 class Word_Funcs:
-
+    with open(WORD_DATA_FILE, "r") as f:
+        data = json.load(f)
+        LETTER_SCORE = data[0]
+        WORD_INFO = data[1]
+        ALL_DISPLAYED = [info["displayed"] for info in WORD_INFO.values()]
+        DISPLAYED_TO_WORD = {info["displayed"]: word for word, info in WORD_INFO.items()}
+        DISPLAYED_SCORES = {info["displayed"]: info["score"] for info in WORD_INFO.values()}
+        
     def only_letters(w):
         output = ''
         for c in w:
             if c.isalpha(): output += c.upper()
         return output
-
-    with open("word_list.txt") as file:
-        ALL_DISPLAYED = []
-        DISPLAYED_TO_WORD = {}
-        for word in file.read().splitlines():
-            word = word.upper()
-            displayed = only_letters(word)
-            ALL_DISPLAYED.append(displayed)
-            DISPLAYED_TO_WORD[displayed] = word
-
-    LETTERS_BY_FREQUENCY = "ETAOINSRHDLUCMFYWGPBVKXQJZ"
-    LETTER_FREQUENCIES = [12.02, 9.10, 8.12, 7.68, 7.31, 6.95, 6.28, 6.02, 5.92, 4.32, 3.98, 2.88, 2.71,
-                        2.61, 2.30, 2.11, 2.09, 2.03, 1.82, 1.49, 1.11, 0.69, 0.17, 0.11, 0.10, 0.07]
-    # https://pi.math.cornell.edu/~mec/2003-2004/cryptography/subs/frequencies.html
-    LETTER_SCORE = {l:s/100 for l, s in zip(LETTERS_BY_FREQUENCY, LETTER_FREQUENCIES)}
-    WORD_POP = {word: index+1 for index, word in enumerate(ALL_DISPLAYED)}
-
+    
     # filtering method
     @cache
     def get_words_that_match(regex, word_list=ALL_DISPLAYED):
@@ -42,12 +34,11 @@ class Word_Funcs:
     # uses popularity of word and the average letter frequency of the word
     @cache
     def get_word_score(word):
-        base = log(Word_Funcs.WORD_POP[word])+1 # popularity of the word
-        weight_a = len(word) # length of the word
-        weight_b = (len(Word_Funcs.DISPLAYED_TO_WORD[word]) - len(word) + 1) # non-letter characters e.g. spaces, hyphens
-        weight_c = sum([Word_Funcs.LETTER_SCORE[c] for c in word])/len(word) # average letter freqency: 0-1
-        
-        return 20-weight_a
+        """
+        A lower score means the word isn't great (e.g. very long, not common)
+        The autofill method will prioritise words with lower scores
+        """
+        return Word_Funcs.DISPLAYED_SCORES[word]
 
     @cache
     def get_definition(word):
@@ -75,7 +66,7 @@ class Word_Funcs:
         
     def displayed_to_word(displayed):
         """
-        returns lists of words which the displayed word can possibly correspond to.
+        Returns which word the displayed word corresponds to, if it exists.
         """
         try:
             v = Word_Funcs.DISPLAYED_TO_WORD[displayed]
@@ -101,5 +92,4 @@ class Word_Funcs:
         return clue_length
 
 if __name__ == '__main__':
-    for i in range(1, 30):
-        print(i, len([c for c in Word_Funcs.ALL_DISPLAYED if len(c)==i]))
+    print(Word_Funcs.get_word_score("OUT"))

@@ -1,6 +1,6 @@
 # cw_model.py
 
-from app_settings import *
+from app_info import *
 from copy import deepcopy
 from itertools import product
 from datetime import date

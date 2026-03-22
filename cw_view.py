@@ -3,7 +3,7 @@
 from PyQt6.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsRectItem, QGraphicsSimpleTextItem
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtGui import QBrush, QColor, QPen, QFont
-from app_settings import *
+from app_info import *
 
 class CW_View(QGraphicsView):
     def __init__(self, model):

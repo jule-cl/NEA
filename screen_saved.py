@@ -2,9 +2,9 @@
 
 from PyQt6.QtWidgets import QWidget, QGridLayout, QVBoxLayout, QHBoxLayout, QLabel, QScrollArea, QFrame
 from PyQt6.QtCore import Qt
-from widges_custom import Button
+from widgets_custom import Button, WarningBox
 import os, json
-from app_settings import *
+from app_info import *
 
 class Saved_Screen(QWidget):
     def __init__(self, goto_title, load_crossword):
@@ -105,6 +105,12 @@ class Saved_Screen(QWidget):
         return card
 
     def __delete(self, filename):
+        warning = WarningBox("Are you sure you want to delete this crossword?")
+        if warning.clickedButton() == warning.confirm_button:
+            pass # delete it
+        elif warning.clickedButton() == warning.reject_button:
+            return  # do nothing
+
         filepath = os.path.join(SAVED_FOLDER, f"{filename}.json")
         if os.path.exists(filepath):
             os.remove(filepath)

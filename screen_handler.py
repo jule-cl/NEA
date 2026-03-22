@@ -8,10 +8,11 @@ from screen_layout import Layout_Screen
 from screen_clues import Clues_Screen
 from screen_saved import Saved_Screen
 from crossword import Crossword
+from widgets_custom import WarningBox
 
 from functools import partial
 
-from app_settings import *
+from app_info import *
 
 class Screen_Handler(QMainWindow):
     def __init__(self):
@@ -24,30 +25,49 @@ class Screen_Handler(QMainWindow):
         self.stack = QStackedWidget()
         self.setCentralWidget(self.stack)
 
-        self.current_screen = Title_Screen(lambda: self.goto_screen("create", []), lambda: self.goto_screen("saved"))
-        self.stack.addWidget(self.current_screen)
+        self.goto_screen("title", "")
 
-    def goto_screen(self, screen, *data):
-        self.__close_all_screens()
-        match screen: 
+    def goto_screen(self, dest, source, *data):
+        # check for warnings 
+        match dest:
             case "title":
-                self.current_screen = Title_Screen(lambda: self.goto_screen("create"), lambda: self.goto_screen("saved"))
-                if data: Crossword.save(data[0])
+                if source == "clues": 
+                    warning = WarningBox("Confirm leaving? Crossword will be saved.")
+                    if warning.clickedButton() == warning.confirm_button:
+                        pass # open the next page
+                    elif warning.clickedButton() == warning.reject_button:
+                        return  # do nothing
+            case "clues":
+                if source == "layout": 
+                    warning = WarningBox("Are you sure you are happy with the layout? This cannot be changed.")
+                    if warning.clickedButton() == warning.confirm_button:
+                        pass # open the next page
+                    elif warning.clickedButton() == warning.reject_button:
+                        return  # do nothing
+            case _:
+                pass
+        # close active screens
+        self.__close_all_screens()
+        # open next screen
+        match dest: 
+            case "title":
+                self.current_screen = Title_Screen(lambda: self.goto_screen("create", dest), lambda: self.goto_screen("saved", dest))
+                if source == "clues": Crossword.save(data[0])
             case "create":
-                self.current_screen = Creation_Screen(lambda: self.goto_screen("title"), partial(self.goto_screen, "layout"))
+                self.current_screen = Creation_Screen(lambda: self.goto_screen("title", dest), partial(self.goto_screen, "layout", dest))
             case "layout":
                 # receiving (grid_size, title)
-                self.current_screen = Layout_Screen(data[0], data[1], lambda: self.goto_screen("title"), partial(self.goto_screen, "clues"))
+                self.current_screen = Layout_Screen(data[0], data[1], lambda: self.goto_screen("title", dest), partial(self.goto_screen, "clues", dest))
             case "clues":
                 # receiving (grid object) -- can be from screen_saved (loading a crossword), or from screen_layout
-                self.current_screen = Clues_Screen(data[0], partial(self.goto_screen, "title"))
+                self.current_screen = Clues_Screen(data[0], partial(self.goto_screen, "title", dest))
             case "saved":
                 self.current_screen = Saved_Screen(
-                    lambda: self.goto_screen("title"),
-                    lambda filepath: self.goto_screen("clues", Crossword.load(filepath))
+                    lambda: self.goto_screen("title", dest),
+                    lambda filepath: self.goto_screen("clues", dest, Crossword.load(filepath))
                 )
             case _:
-                raise ValueError(f"Unknown screen: {screen}")
+                pass
             
         self.stack.addWidget(self.current_screen)
         self.stack.setCurrentWidget(self.current_screen)

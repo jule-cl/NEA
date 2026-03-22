@@ -17,8 +17,8 @@ the process of choosing a candidate can be reworked to get better words
 """
 
 from cw_clue import CW_Clue
-from pqueue import PQueue
-from app_settings import *
+from minheap import Min_Heap
+from app_info import *
 
 from copy import deepcopy
       
@@ -61,7 +61,7 @@ class Autofill:
     def fill(self, constraint=5):
         self.filled_clues = []
         
-        self.clues_to_fill = PQueue()
+        self.clues_to_fill = Min_Heap()
         for clue in self.__all_clues:
             clue.update_score()
             self.clues_to_fill.insert_node(clue)
@@ -154,8 +154,8 @@ class Autofill:
     def __update_priority(self, affected_clue):
         for clue in affected_clue.intersections.union(set([affected_clue])):
             if self.clues_to_fill.has_node(clue): 
-                clue.update_score()
                 self.clues_to_fill.pop_node(clue)
+                clue.update_score()
                 self.clues_to_fill.insert_node(clue)
                 
     def __to_cell_number(self, r, c):

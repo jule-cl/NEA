@@ -1,6 +1,6 @@
 from math import inf
 from word_funcs import Word_Funcs
-from app_settings import *
+from app_info import *
 
 class CW_Clue:
     def __init__(self, parent_grid, row, col, direction, length, clue_number, word="", clue_sentence=""):
@@ -44,7 +44,7 @@ class CW_Clue:
         candidates = self.get_possible_words()
         if not candidates: self.score = 0
         elif len(candidates) == 1: self.score = 1
-        else: self.score = Word_Funcs.get_word_score(candidates[0])
+        else: self.score = Weights.WEIGHT_1 * Word_Funcs.get_word_score(candidates[0]) + Weights.WEIGHT_2 * Word_Funcs.get_word_score(candidates[1])
         
     def change_letter(self, row, col, letter, update_length=False):
         position = (row-self.row) + (col-self.col)

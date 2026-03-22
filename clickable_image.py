@@ -1,10 +1,13 @@
 # clickable_image.py
 
+# import relevant modules
 from PyQt6.QtWidgets import QLabel
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import Qt, pyqtSignal
 
 class Clickable_Image(QLabel):
+    
+    
     clicked = pyqtSignal(int)
     
     def __init__(self, image_path, data):
