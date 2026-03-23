@@ -1,11 +1,13 @@
-# bitboard.p
+# bitboard.py
 
 from copy import deepcopy
 
 class Bitboard:
     """
+    The class used to store a bitboard and convert the cells into binary, which then can be stored as an integer.
+    
     Variables:
-        __cells (list(tuple(int, int))): A list containing cell coordinates which are included in the bitboard.
+        __cells (list[tuple[int, int]]): A list containing cell coordinates which are included in the bitboard.
         __bb_size (int): The size of the overall bitboard, to determine where to pad the 0s.
         __bounds (dict): A dictionary recording the rows and column numbers of the edges of the bitboard pattern.
         __bitboard (int): The integer representing the bitboard. 

@@ -39,10 +39,10 @@ class Weights:
     """
     WEIGHT_1 = 0.8 # most common word
     WEIGHT_2 = 0.2 # second common word
-    WEIGHT_BASE = 1 # popularity of word
-    WEIGHT_A = 3 # length of word
+    WEIGHT_BASE = 1.5 # popularity of word
+    WEIGHT_A = 2 # length of word
     WEIGHT_B = 0.05 # non-character words
-    WEIGHT_C = 0.1 # letter frequency
+    WEIGHT_C = 0 # letter frequency
 
 # saving crosswords
 SAVED_FOLDER = "saved_crosswords"

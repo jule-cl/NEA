@@ -7,7 +7,22 @@ import os, json
 from app_info import *
 
 class Saved_Screen(QWidget):
+    """
+    The screen that displays all saved crosswords as a scrollable grid of cards.
+    The user can open or delete any saved puzzle.
+
+    Methods:
+        refresh: Reloads the index and rebuilds all crossword cards.
+    """
     def __init__(self, goto_title, load_crossword):
+        """
+        Initialises the saved screen with a scrollable card area and a back button.
+        If no crosswords have been saved, a message will be displayed.
+
+        Args:
+            goto_title (callable): Function to navigate back to the title screen.
+            load_crossword (callable): Function to open a saved crossword in the clues screen editor, passing the filename (str) as an argument.
+        """
         super().__init__()
         self.load_crossword = load_crossword  # function that loads the editor
 
@@ -30,7 +45,6 @@ class Saved_Screen(QWidget):
         self.__card_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.__card_layout.setHorizontalSpacing(20)
         self.__card_layout.setVerticalSpacing(20)
-        self.__card_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.__card_layout.setSpacing(12)
         scroll_area.setWidget(self.__card_container)
         main_layout.addWidget(scroll_area)
@@ -43,6 +57,10 @@ class Saved_Screen(QWidget):
         self.refresh()
 
     def refresh(self):
+        """
+        Clears all existing cards and rebuilds them from the saved index file.
+        Displays a message if no saved crosswords exist.
+        """
         # clear existing cards
         for i in range(self.__card_layout.count()-1, -1, -1):
             self.__card_layout.itemAt(i).widget().deleteLater()
@@ -62,6 +80,15 @@ class Saved_Screen(QWidget):
             self.__card_layout.addWidget(self.__make_card(crossword), row, col)
 
     def __make_card(self, crossword):
+        """
+        Creates and returns a card widget for the given crossword entry.
+
+        Args:
+            crossword (dict): A crossword index entry containing title, grid_size, created_date, and filename fields.
+
+        Returns:
+            QFrame: The constructed card widget.
+        """
         card = QFrame()
         card.setFixedWidth(int(WINDOW_W*0.92//CARDS_PER_ROW))
         card.setFixedHeight(int(card.width()*0.9))
@@ -80,10 +107,10 @@ class Saved_Screen(QWidget):
         # title
         title_label = QLabel(crossword["title"])
         title_label.setWordWrap(True)
-        title_label.setStyleSheet(f"font-size: 18px; font-weight: bold; color: {Theme.FOREGROUND};border: none")
+        title_label.setStyleSheet(f"font-size: 24px; font-weight: bold; color: {Theme.FOREGROUND};border: none")
         # metadata
         meta_label = QLabel(f"{crossword["grid_size"]}x{crossword["grid_size"]} grid\nCreated on: {crossword["created_date"]}")
-        meta_label.setStyleSheet(f"font-size: 12px; color: {Theme.FOREGROUND}; border: none")
+        meta_label.setStyleSheet(f"font-size: 18px; color: {Theme.FOREGROUND}; border: none")
         # add to layout
         layout.addWidget(title_label)
         layout.addWidget(meta_label)
@@ -105,6 +132,13 @@ class Saved_Screen(QWidget):
         return card
 
     def __delete(self, filename):
+        """
+        Prompts the user to confirm deletion.
+        Deletes the crossword file and removes it from the index before refreshing the card display.
+
+        Args:
+            filename (str): The filename of the crossword to delete, without extension.
+        """
         warning = WarningBox("Are you sure you want to delete this crossword?")
         if warning.clickedButton() == warning.confirm_button:
             pass # delete it

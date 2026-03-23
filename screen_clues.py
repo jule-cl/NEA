@@ -1,4 +1,4 @@
-# clues_screen.py
+# screen_clues.py
 
 from PyQt6.QtWidgets import QWidget, QLabel, QVBoxLayout, QHBoxLayout, QGridLayout, QTabWidget, QScrollArea, QLineEdit
 from PyQt6.QtCore import Qt, pyqtSignal, QPointF
@@ -13,10 +13,28 @@ from app_info import *
 from word_funcs import Word_Funcs
 
 class Clues_Screen(QWidget):
+    """
+    The screen for editing clues, displaying the crossword grid alongside a tabbed info panel with tools, clue entry, and statistics.
+
+    Signals:
+        mouse_clicked (QPointF): Emitted when the user clicks on the screen.
+        key_pressed (int): Emitted when the user presses a key.
+
+    Methods:
+        mousePressEvent: Handles mouse click and emits mouse_clicked.
+        keyPressEvent: Handles key press and emits key_pressed.
+    """
     mouse_clicked = pyqtSignal(QPointF)
     key_pressed = pyqtSignal(int)
     
     def __init__(self, grid, back_to_menu):
+        """
+        Initialises the clues screen, setting up the MVC components, and the GUI.
+
+        Args:
+            grid (Crossword): The crossword object to edit.
+            back_to_menu (callable): The function which leads user to title screen, sending the Crossword object as an argument to save.
+        """
         super().__init__()
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
 
@@ -36,30 +54,60 @@ class Clues_Screen(QWidget):
         info_box = Clues_Info_Box(self.cw_controller)
         info_box.setParent(self)
         self.cw_controller.update_info.connect(info_box.update)
-        # leave
+        # leave button
         leave_button = Button("Save and back to Menu", self)
         leave_button.clicked.connect(lambda: back_to_menu(self.cw_model.get_crossword_object()))
 
         self.cw_controller.draw()
         self.show()
-        # move stuff
+        
+        # move widgets
         Widget_Positioner.middle_left(self.cw_view, WIDGET_PADDING, WINDOW_H//2)
         Widget_Positioner.top_center(title, WINDOW_W//2, WIDGET_PADDING)
         Widget_Positioner.middle_right(info_box, WINDOW_W-4*WIDGET_PADDING, WINDOW_H//2)
         Widget_Positioner.bottom_left(leave_button, WIDGET_PADDING, WINDOW_H-WIDGET_PADDING)
         
     def mousePressEvent(self, event):
+        """
+        Handles a mouse click, converting the screen position to view coordinates and emitting the mouse_clicked signal.
+
+        Args:
+            event (QMouseEvent): The event of a mouse click.
+        """
         if event.button() == Qt.MouseButton.LeftButton:
             screen_pos = event.position()
             view_pos = self.cw_view.mapFrom(self, screen_pos)
-            
             self.mouse_clicked.emit(view_pos)
             
     def keyPressEvent(self, event):
+        """
+        Handles a key press event by emitting the key_pressed signal with the key.
+
+        Args:
+            event (QKeyEvent): The key event.
+        """
         self.key_pressed.emit(event.key())
         
 class Clues_Info_Box(QWidget):
+    """
+    A tabbed info panel displayed alongside the crossword grid on the clues screen.
+    Contains two tabs: 
+        Actions: some buttons and some info about the grid
+        Clue: clue entry
+
+    Methods:
+        update: Refreshes all tab content based on the current controller state.
+        create_actions_tab: Builds and returns the actions tab widget.
+        create_clue_tab: Builds and returns the clue entry tab widget.
+        create_stats_tab: Builds and returns the statistics tab widget.
+    """
     def __init__(self, cw_controller):
+        """
+        Initialises the info box, and creates the tabs.
+
+        Args:
+            cw_controller (CW_Controller): The controller used to read and modify crossword state.
+        """
         super().__init__()
         self.cw_controller = cw_controller
 
@@ -70,26 +118,23 @@ class Clues_Info_Box(QWidget):
         overall_layout.setContentsMargins(15, 15, 15, 15)
         self.setLayout(overall_layout)
 
-        # Create tab widget
+        # create tab widget
         self.tabs = QTabWidget()
         overall_layout.addWidget(self.tabs)
 
-        # Create tabs
+        # create tabs
         self.actions_tab = self.create_actions_tab()
         self.clue_tab = self.create_clue_tab()
-        self.stats_tab = self.create_stats_tab()
 
-        # Add tabs
+        # add tabs
         self.tabs.addTab(self.actions_tab, "Actions")
         self.tabs.addTab(self.clue_tab, "Clue")
-        self.tabs.addTab(self.stats_tab, "Statistics")
 
         self.tabs.setStyleSheet(f"""
         QTabWidget::pane {{
             border: 2px solid {Theme.FOREGROUND};
             background-color: red;
         }}
-
         QTabBar::tab {{
             background: {Theme.CELL_BASE};
             color: {Theme.FOREGROUND};
@@ -99,17 +144,14 @@ class Clues_Info_Box(QWidget):
             border-top-left-radius: 6px;
             border-top-right-radius: 6px;
         }}
-
         QTabBar::tab:selected {{
             background: {Theme.SECONDARY_BACKGROUND};
             color: white;
             font-weight: bold;
         }}
-
         QTabBar::tab:hover {{
             background: {Theme.SELECTED_CELL};
         }}
-
         QTabBar::tab:!selected {{
             margin-top: 3px;
         }}
@@ -118,6 +160,10 @@ class Clues_Info_Box(QWidget):
         self.update()
         
     def update(self):
+        """
+        Refreshes the actions tab button states, the selected clue and word labels,
+        and the word labels and clue sentences in the clue tab.
+        """
         # actions tab
         self.autofill_button.setEnabled(self.cw_controller.is_grid_clear())
         self.clear_button.setEnabled(not self.cw_controller.is_grid_clear())
@@ -141,6 +187,12 @@ class Clues_Info_Box(QWidget):
             clue.clue_sentence = self.__clue_grid.itemAtPosition(i+offset, 2).widget().text()
 
     def create_actions_tab(self):
+        """
+        Builds the actions tab containing the action buttons and some info.
+
+        Returns:
+            QWidget: The actions tab widget.
+        """
         tab = QWidget()
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignmentFlag.AlignTop)
@@ -178,6 +230,14 @@ class Clues_Info_Box(QWidget):
         return tab
 
     def create_clue_tab(self):
+        """
+        Builds the clue tab containing a scrollable grid.
+        Each row is a clue clue, showing the clue number, current word, and a text input for the clue sentence.
+        Clues are grouped under 'Across' and 'Down' headers.
+
+        Returns:
+            QWidget: The clue tab widget.
+        """
         tab = QWidget()
         outer_layout = QVBoxLayout(tab)
 
@@ -200,8 +260,6 @@ class Clues_Info_Box(QWidget):
         self.__clue_grid.setSpacing(0)
         self.__clue_grid.setContentsMargins(0, 0, 0, 0)
 
-        # put each clue as a row
-        # across header
         header = QLabel("Across")
         header.setStyleSheet(f"color: {Theme.FOREGROUND}; font-weight: bold; font-size: 13px;")
         self.__clue_grid.addWidget(header, 0, 0, 1, 3)
@@ -232,19 +290,4 @@ class Clues_Info_Box(QWidget):
 
         scroll.setWidget(container)
         outer_layout.addWidget(scroll)
-        return tab
-        
-    def create_stats_tab(self):
-        tab = QWidget()
-        layout = QVBoxLayout()
-        layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        tab.setLayout(layout)
-
-        self.stats_label = QLabel("Statistics will go here")
-        self.stats_label.setStyleSheet(
-            f"color: {Theme.FOREGROUND}; font-size: 14px;"
-        )
-
-        layout.addWidget(self.stats_label)
-
         return tab

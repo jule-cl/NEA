@@ -1,6 +1,5 @@
-# cw_model.py
+# crossword.py
 
-from app_info import *
 from copy import deepcopy
 from itertools import product
 from datetime import date
@@ -8,14 +7,42 @@ import os
 import json
 
 from cw_clue import CW_Clue
+from app_info import *
 
 class Crossword:
+    """
+    Represents a crossword puzzle, storing the grid and all associated clues, as well as metadata.
+
+    Variables:
+        __GRID_SIZE (int): The fixed size of the grid (number of rows/columns).
+        __grid (list[list[str]]): 2D list storing the contents of each cell.
+        __numbered_cells (list[tuple[int, int, str]]): List of (row, col, direction) tuples for numbered cells.
+        __all_clues (list[CW_Clue]): List of all clues derived from the current grid layout.
+
+    Methods:
+        save: Serialises the crossword to a JSON file at the given filepath.
+        load: Class method that deserialises a crossword from a JSON file.
+        empty_grid: Resets all cells to empty.
+        clear_grid: Removes all letters while preserving blocked cells.
+        flip_blocked_symmetry: Toggles a cell between blocked and empty, applying symmetry.
+        change_letter: Updates a single cell and all clues containing it.
+        clues_containing_cell: Returns all clues that pass through a given cell.
+        print_grid: Prints a text representation of the grid to the console.
+
+    Getters:
+        get_grid_size: Returns the grid size.
+        get_grid: Returns the 2D grid list.
+        get_all_clues: Returns the list of all clues.
+        get_letter_in_cell: Returns the character at a given cell.
+        get_numbered_cells: Returns the list of numbered cells.
+
+    Checks:
+        is_grid_empty: Returns True if all cells are empty.
+        is_grid_clear: Returns True if all cells are either empty or blocked.
+        is_cell_corner: Returns True if the cell belongs to both an across and down word.
+        is_cell_in_word: Returns True if the cell is part of a word in the given direction.
+    """
     def __init__(self, grid_size, title, created_date=str(date.today()), filename=""):
-        """
-        selected_cell: (int, int)
-        selected_direction: "A" / "D"
-        """
-        
         ## META DATA
         self.__title = title
         self.__created_date = created_date
@@ -31,6 +58,11 @@ class Crossword:
 
     # saving / loading
     def save(self):
+        """
+        Serialises and saves the crossword to a JSON file in the saves folder.
+        If the crossword has not been saved before, a new file is created and registered in the index.
+        If the crossword has already been saved, the existing file is overwritten.
+        """
         os.makedirs(SAVED_FOLDER, exist_ok=True)
         
         # if this crossword has not already been saved before, create new file TODO
@@ -79,6 +111,15 @@ class Crossword:
     
     @classmethod
     def load(cls, filename):
+        """
+        Deserialises a crossword from a JSON file and returns a new Crossword instance.
+        
+        Args:
+            filename (str): The name of the file to load from.
+        
+        Returns:
+            Crossword: A new Crossword instance populated with the saved data.
+        """
         filepath = os.path.join(SAVED_FOLDER, f"{filename}.json")
         with open(filepath, "r") as f:
             data = json.load(f)
@@ -88,6 +129,7 @@ class Crossword:
         return crossword
 
     def __clue_sentences_to_dict(self):
+        """Returns a dictionary containing all the clue sentences, with the corresponding clue number."""
         sentences_dict = {'A': {}, 'D': {}}
         for clue in self.__all_clues:
             sentences_dict[clue.direction][clue.clue_number] = clue.clue_sentence
@@ -111,7 +153,8 @@ class Crossword:
             # add to list if exists
             if direction: self.__numbered_cells.append((row, col, direction))
             
-    def __update_clues(self, sentences=None): # done after layout is confirmed, and always updates numbered cells
+    def __update_clues(self, sentences=None): 
+        # done after layout is confirmed, and always updates numbered cells
         # all_clues is ordered by accross asc, then down asc
         self.__update_numbered_cells()
         
@@ -148,6 +191,14 @@ class Crossword:
         self.__all_clues = across + down
 
     def flip_blocked_symmetry(self, row, col, symmetry):
+        """
+        Flip the cell at (row, col) between blocked and empty, applying the given symmetry so that corresponding cells are also fliped to match.
+
+        Args:
+            row (int): Row index of the cell to flip.
+            col (int): Column index of the cell to flip.
+            symmetry (int): Symmetry mode. 1 for no symmetry, 2 for 2-fold, 4 for 4-fold.
+        """
         self.__flip_blocked(row, col)
         target = self.__grid[row][col]
         
@@ -165,13 +216,24 @@ class Crossword:
         
         self.__update_clues()
         
-    def __flip_blocked(self, row, col, target=None): # flip for one cell
+    def __flip_blocked(self, row, col, target=None): 
+        """Flip between blocked and empty for one cell. If target is given, then the cell is set to the target instead."""
         if target == None:
             if self.__grid[row][col] == EMPTY_CELL: target = BLOCKED_CELL
             elif self.__grid[row][col] == BLOCKED_CELL: target = EMPTY_CELL
         self.__grid[row][col] = target
 
     def clues_containing_cell(self, row, col):
+        """
+        Returns all clues that pass through the given cell.
+
+        Args:
+            row (int): Row # of the cell.
+            col (int): Column # of the cell.
+
+        Returns:
+            set[CW_Clue]: Set of clues that contain the cell.
+        """
         clues = set()
         for clue in self.__all_clues:
             if (row, col) in clue.cells: clues.add(clue)
@@ -179,38 +241,106 @@ class Crossword:
 
     # editing words
     def change_letter(self, row, col, letter, update_lengths=True):
+        """
+        Updates the letter at the given cell in the grid and in all clues containing that cell.
+
+        Args:
+            row (int): Row # of the cell.
+            col (int): Column # of the cell.
+            letter (chr): The new letter to place in the cell.
+            update_lengths (bool): Whether to update word lengths in affected clues. Defaults to True.
+        """
         self.__grid[row][col] = letter
         for clue in self.clues_containing_cell(row, col):
             clue.change_letter(row, col, letter, update_lengths)
 
     # general getters and setters and checks
     def get_grid_size(self):
+        """
+        Returns the size of the grid.
+
+        Returns:
+            int: The number of rows/columns in the grid.
+        """
         return self.__GRID_SIZE
     
     def get_grid(self):
+        """
+        Returns the 2D grid list.
+
+        Returns:
+            list[list[str]]: The grid, where each cell contains a letter, EMPTY_CELL, or BLOCKED_CELL.
+        """
         return self.__grid
     
     def get_all_clues(self):
+        """
+        Returns all clues in the crossword, ordered by across ascending then down ascending.
+
+        Returns:
+            list[CW_Clue]: List of all clues.
+        """
         return self.__all_clues
     
     def set_grid(self, grid, sentences=None):
+        """
+        Replaces the current grid with the given one and updates all clue sentences.
+
+        Args:
+            grid (list[list[str]]): The new grid to set.
+            sentences (dict): Clue sentences to restore, if given.
+        """
         if len(grid) != self.__GRID_SIZE: raise Exception("something's wrong")
         self.__grid = grid
         self.__update_clues(sentences)
     
     def get_letter_in_cell(self, row, col):
+        """
+        Returns the character stored at the given cell.
+
+        Args:
+            row (int): Row # of the cell.
+            col (int): Column # of the cell.
+
+        Returns:
+            str: The character at the cell (letter, EMPTY_CELL, or BLOCKED_CELL).
+        """
         return self.__grid[row][col]
 
     def get_numbered_cells(self):
+        """
+        Returns the list of numbered cells in the grid.
+
+        Returns:
+            list[tuple[int, int, str]]: List of (row, col, direction) tuples for each numbered cell.
+        """
         return self.__numbered_cells
 
     def get_blocked_cells_count(self):
+        """
+        Returns the total number of blocked cells in the grid.
+
+        Returns:
+            int: The count of blocked cells.
+        """
         return sum(cell == BLOCKED_CELL for row in self.__grid for cell in row)
 
     def get_checked_cells_count(self):
+        """
+        Returns the number of cells that belong to both an across and a down word.
+
+        Returns:
+            int: The count of checked cells.
+        """
         return sum([self.is_cell_checked((row, col)) for row in range(self.__GRID_SIZE) for col in range(self.__GRID_SIZE)])
 
     def get_all_word_lengths(self):
+        """
+        Returns a dictionary mapping word lengths to how many words of that length exist in the grid.
+
+        Returns:
+            dict[int, int]: A dictionary where keys are word lengths and values are counts.
+        """
         word_lengths = {}
         for clue in self.__all_clues:
             if clue.length not in word_lengths.keys():
@@ -220,30 +350,63 @@ class Crossword:
         return word_lengths
 
     def empty_grid(self):
+        """Resets all cells in the grid to EMPTY_CELL."""
         self.__grid = [[EMPTY_CELL]*self.__GRID_SIZE for _ in range(self.__GRID_SIZE)]
         self.__update_clues()
         
     def clear_grid(self):
+        """Removes all letters from the grid while preserving blocked cells."""
         newGrid = [[EMPTY_CELL if cell != BLOCKED_CELL else BLOCKED_CELL for cell in row] for row in self.__grid]
         self.__grid = deepcopy(newGrid)
         self.__update_clues()
     
     def is_grid_empty(self):
+        """
+        Checks whether all cells in the grid are empty.
+
+        Returns:
+            bool: True if every cell is EMPTY_CELL, False otherwise.
+        """
         for row in self.__grid:
             for cell in row:
                 if cell != EMPTY_CELL: return False
         return True
     
     def is_grid_clear(self):
+        """
+        Checks whether the grid contains no letters.
+
+        Returns:
+            bool: True if every cell is either EMPTY_CELL or BLOCKED_CELL, False otherwise.
+        """
         for row in self.__grid:
             for cell in row:
                 if not(cell == EMPTY_CELL or cell == BLOCKED_CELL): return False
         return True
 
     def is_cell_checked(self, cell):
+        """
+        Checks whether a cell belongs to both an across and a down word.
+
+        Args:
+            cell (tuple[int, int]): The (row, col) position of the cell.
+
+        Returns:
+            bool: True if the cell is part of both an across and a down word.
+        """
         return self.is_cell_in_word(cell, 'A') and self.is_cell_in_word(cell, 'D')
 
     def is_cell_in_word(self, cell, dir):
+        """
+        Checks whether a cell is part of a word in the given direction.
+
+        Args:
+            cell (tuple[int, int]): The (row, col) position of the cell.
+            dir (str): The direction to check. 'A' for across, 'D' for down.
+
+        Returns:
+            bool: True if the cell is part of a word in the given direction.
+        """
         row, col = cell
         if self.__grid[row][col] == BLOCKED_CELL: return False
         # across check
@@ -259,6 +422,6 @@ class Crossword:
         raise Exception("direction invalid")
 
     def print_grid(self):
-        print('\n'.join(['|'.join([' ' if not c else c for c in row]) for row in self.__grid]))
-        
+        """Prints a text representation of the grid to the console. Used for debugging"""
+        print('\n'.join(['|'.join([' ' if not c else c for c in row]) for row in self.__grid]))    
         

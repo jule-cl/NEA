@@ -1,11 +1,18 @@
-# button.py
+# widgets_custom.py
 
 from PyQt6.QtWidgets import QPushButton, QComboBox, QMessageBox
 from PyQt6.QtCore import Qt
 from app_info import *
 
 class Button(QPushButton):
+    """
+    A custom widget inherited from QPushButton which styles it according to the theme.
+    The cursor is also set to the pointing hand whenever the button is hovered.
+    """
     def __init__(self, *args, **kwargs):
+        """
+        Initialises the button with theme styling and a pointing hand cursor.
+        """
         super().__init__(*args, **kwargs)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setStyleSheet(f"""
@@ -26,7 +33,11 @@ class Button(QPushButton):
             }}""")
         
 class ComboBox(QComboBox):
+    """
+    A custom widget inherited from QComboBox which styles it according to the theme.
+    """
     def __init__(self, *args, **kwargs):
+        """Initialises the combobox with theme styling."""
         super().__init__(*args, **kwargs)
         self.setStyleSheet(f"""
             QComboBox {{
@@ -58,7 +69,22 @@ class ComboBox(QComboBox):
         """) 
 
 class WarningBox(QMessageBox):
+    """
+    A custom widget inherited from QMessageBox used to prompt the user to confirm or reject an action.
+
+    Variables:
+        confirm_button (QPushButton): The Yes button, with AcceptRole.
+        reject_button (QPushButton): The No button, with RejectRole.
+    """
     def __init__(self, text, *args, **kwargs):
+        """
+        Initialises and immediately displays the warning box with the given message.
+        Each warning box will have two buttons: one for confirming and one for rejecting.
+        The subsequent action perform will be determined by the button pressed.
+
+        Args:
+            text (str): The message to display in the warning box.
+        """
         super().__init__(*args, **kwargs)
         self.setText(text)
         self.setStyleSheet(f"""

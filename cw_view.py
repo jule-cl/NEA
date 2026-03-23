@@ -1,12 +1,32 @@
 # cw_view.py
 
 from PyQt6.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsRectItem, QGraphicsSimpleTextItem
-from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtGui import QBrush, QColor, QPen, QFont
 from app_info import *
 
 class CW_View(QGraphicsView):
+    """
+    Renders the crossword grid as a PyQt6 graphics view, drawing cells, letters, and clue numbers based on the current model state.
+
+    Variables:
+        model (CW_Model): The crossword model this view reads from.
+        grid_size (int): The size of the grid being rendered.
+        cell_size (int): The pixel size of each cell.
+        grid_left (float): The x offset to center the grid horizontally in the widget.
+        grid_top (float): The y offset to center the grid vertically in the widget.
+        scene (QGraphicsScene): The scene used to render all grid items.
+
+    Methods:
+        draw: Clears and redraws the entire grid based on current model state.
+        rect_at: Returns the grid coordinates of the cell at a given widget position.
+    """
     def __init__(self, model):
+        """
+        Initialises the view with the given model, setting up the scene.
+
+        Args:
+            model (CW_Model): The crossword model to render.
+        """
         super().__init__()
         self.__widget_width = int(WINDOW_W*0.6)
         self.__widget_height = int(WINDOW_H*0.8)
@@ -25,6 +45,13 @@ class CW_View(QGraphicsView):
         self.setSceneRect(self.rect().toRectF())
         
     def draw(self, editing_mode):
+        """
+        Clears and redraws the entire grid, including cell colours, letters, and clue numbers. 
+        The cell colour is decided by whether the cell is blocked, selected, or part of the selected word, depending on the editing mode.
+
+        Args:
+            editing_mode (CW_MODE): The current editing mode, either LAYOUT or CLUES.
+        """
         self.scene.clear()
         self.setStyleSheet(f"background: transparent; border: none;")
         grid = self.model.get_grid()
@@ -33,7 +60,7 @@ class CW_View(QGraphicsView):
         
         for r in range(self.grid_size):
             for c in range(self.grid_size):
-                # colour of cell
+                # set colour of cell
                 colour = Theme.CELL_BASE
                 if grid[r][c] == BLOCKED_CELL: colour = Theme.BLOCKED_CELL
                 elif editing_mode == CW_MODE.CLUES:
@@ -74,14 +101,22 @@ class CW_View(QGraphicsView):
             if (row, col) == selected_cell: 
                 number.setZValue(100)
             self.scene.addItem(number)
-            
 
     def rect_at(self, pos):
-        item_list = self.items(pos.toPoint()) # need to get all items, in case clicked on the number
+        """
+        Returns the grid coordinates of the cell at the given widget position.
+        Returns (-1, -1) if no cell exists at that position.
+
+        Args:
+            pos (QPointF): The position in screen coordinates.
+
+        Returns:
+            tuple[int, int]: The (row, col) of the cell at the position, or (-1, -1) if no cell was found.
+        """
+        item_list = self.items(pos.toPoint()) # get all items, in case it found the number
         if not item_list: return (-1, -1)
         
         if isinstance(item_list[-1], QGraphicsRectItem):
             return item_list[-1].data(0)
         
-        return (-1, -1)
-            
+        return (-1, -1)    

@@ -1,4 +1,4 @@
-# layout_screen.py
+# screen_layout.py
 
 from PyQt6.QtWidgets import QWidget, QLabel, QVBoxLayout, QHBoxLayout
 from PyQt6.QtCore import Qt, pyqtSignal, QPointF
@@ -11,10 +11,32 @@ from cw_controller import CW_Controller
 from app_info import *
 
 class Layout_Screen(QWidget):
+    """
+    The screen for designing the crossword grid layout by toggling blocked cells.
+    Displays the crossword grid alongside a panel with layout tools and statistics.
+
+    Signals:
+        mouse_clicked (QPointF): Emitted when the user clicks on the screen.
+        key_pressed (int): Emitted when the user presses a key.
+
+    Methods:
+        mousePressEvent: Handles mouse click and emits mouse_clicked.
+        keyPressEvent: Handles key press and emits key_pressed.
+        get_symmetry: Returns the currently selected symmetry mode.
+    """
     mouse_clicked = pyqtSignal(QPointF)
     key_pressed = pyqtSignal(int)
     
     def __init__(self, grid_size, crossword_title, back_to_title, go_to_clues):
+        """
+        Initialises the layout screen, setting up the MVC components and the GUI
+
+        Args:
+            grid_size (int): The size of the crossword grid to create.
+            crossword_title (str): The title of the crossword being created.
+            back_to_title (callable): Function to navigate back to the title screen.
+            go_to_clues (callable): Function to navigate to the clues screen, passing the Crossword object as an argument.
+        """
         super().__init__()
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         
@@ -51,20 +73,52 @@ class Layout_Screen(QWidget):
         Widget_Positioner.bottom_right(next_button, WINDOW_W-WIDGET_PADDING, WINDOW_H-WIDGET_PADDING)
         
     def mousePressEvent(self, event):
+        """
+        Handles a mouse click, converting the screen position to view coordinates and emitting the mouse_clicked signal.
+
+        Args:
+            event (QMouseEvent): The mouse press.
+        """
         if event.button() == Qt.MouseButton.LeftButton:
             screen_pos = event.position()
             view_pos = self.cw_view.mapFrom(self, screen_pos)
-            
             self.mouse_clicked.emit(view_pos)
             
     def keyPressEvent(self, event):
+        """
+        Handles a key press event by emitting the key_pressed signal with the key.
+
+        Args:
+            event (QKeyEvent): The key press.
+        """
         self.key_pressed.emit(event.key())
         
     def get_symmetry(self):
+        """
+        Returns the symmetry mode currently selected in the info box.
+
+        Returns:
+            int: The selected symmetry mode.
+        """
         return self.info_box.get_symmetry()
         
 class Layout_Info_Box(QWidget):
+    """
+    A panel displayed alongside the crossword grid on the layout screen.
+    Contains layout generation tools and updating grid statistics.
+
+    Methods:
+        generate_layout: Calls layout generation using the current base and symmetry settings via the controller.
+        get_symmetry: Returns the currently selected symmetry value.
+        update: Refreshes all statistics labels and button states based on current grid state.
+    """
     def __init__(self, cw_controller):
+        """
+        Initialises the info box with layout tools and statistics labels.
+
+        Args:
+            cw_controller (CW_Controller): The controller used to read and modify the grid.
+        """
         super().__init__()
         self.cw_controller = cw_controller
         
@@ -83,7 +137,7 @@ class Layout_Info_Box(QWidget):
         # title
         self.actions_title = QLabel("Layout Tools")
         self.actions_title.setStyleSheet(f"color: {Theme.FOREGROUND}; font-size: 18px; font-weight: bold;")
-        # generat layout layout
+        # generate layout layout
         self.generate_layout_layout = QHBoxLayout()
         self.generate_layout_layout.setSpacing(10)
         # base pattern selection
@@ -102,7 +156,7 @@ class Layout_Info_Box(QWidget):
         self.generate_layout_layout.addWidget(self.base_selection)
         self.generate_layout_layout.addWidget(self.symmetry_options)
         self.generate_layout_layout.addWidget(self.fill_button)
-        # empty button (click to empty grid)
+        # empty button
         self.empty_button = Button("Empty grid", self)
         self.empty_button.clicked.connect(self.cw_controller.empty_grid)
         # errors button
@@ -120,19 +174,17 @@ class Layout_Info_Box(QWidget):
         info_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         info_layout.setSpacing(8)
         info_layout.setContentsMargins(15, 15, 15, 15)
-
+        
         info_container.setStyleSheet(f"""
             QWidget {{
                 background-color: {Theme.SECONDARY_BACKGROUND};
                 border-radius: 10px;
             }}
-
             QLabel#StatsTitle {{
                 color: {Theme.FOREGROUND};
                 font-size: 20px;
                 font-weight: 600;
             }}
-
             QLabel#StatsLabel {{
                 color: {Theme.FOREGROUND};
                 font-size: 18px;
@@ -152,14 +204,9 @@ class Layout_Info_Box(QWidget):
         self.no_of_words = QLabel()
         self.checked_cells = QLabel()
         all_labels = [
-            self.grid_size,
-            self.blocked_empty,
-            self.percentage_blocked,
-            self.longest_length,
-            self.common_length,
-            self.average_length,
-            self.no_of_words,
-            self.checked_cells
+            self.grid_size, self.blocked_empty, self.percentage_blocked,
+            self.longest_length, self.common_length, self.average_length,
+            self.no_of_words, self.checked_cells
         ]
 
         # add to layout
@@ -170,10 +217,13 @@ class Layout_Info_Box(QWidget):
             label.setObjectName("StatsLabel")
         overall_layout.addWidget(info_container)
 
-        # initialize stats when screen loads
+        # initialise stats when screen loads
         self.update()
         
     def generate_layout(self):
+        """
+        Reads the current base pattern and symmetry selections and calls layout generation via the controller.
+        """
         base_pattern = self.base_selection.currentText()
         if base_pattern == BASE_SELECTION_OPTIONS[4]:
             seed = None
@@ -181,9 +231,18 @@ class Layout_Info_Box(QWidget):
         self.cw_controller.generate_layout(3.6, seed, self.get_symmetry())
         
     def get_symmetry(self):
+        """
+        Returns the symmetry mode based on the current symmetry dropdown selection.
+
+        Returns:
+            int: The selected symmetry mode.
+        """
         return SYMMETRY_OPTIONS[self.symmetry_options.currentText()]
         
     def update(self):
+        """
+        Refreshes the statistics labels and enabled states of buttons based on the current grid content and UI selections.
+        """
         crossword = self.cw_controller.model.get_crossword_object()
         size = crossword.get_grid_size()
 

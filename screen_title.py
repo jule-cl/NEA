@@ -1,4 +1,4 @@
-# title_screen.py
+# screen_title.py
 
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel
 from PyQt6.QtCore import Qt
@@ -6,7 +6,17 @@ from widgets_custom import Button
 from app_info import *
 
 class Title_Screen(QWidget):
+    """
+    The main title screen of the application, presenting the app name and navigation buttons to create a new crossword or open saved ones.
+    """
     def __init__(self, goto_creation, goto_saved):
+        """
+        Initialises the title screen with a title label and navigation buttons.
+
+        Args:
+            goto_creation (callable): Function to navigate to the creation screen.
+            goto_saved (callable): Function to navigate to the saved screen.
+        """
         super().__init__()
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)

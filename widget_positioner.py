@@ -1,6 +1,15 @@
 # widget_positioner.py
 
 class Widget_Positioner:
+    """
+    A collection of static methods for positioning widgets using absolute coordinates,
+    anchoring them by different points (corners, edges, or centre).
+    All methods call widget.move() to set the widget's top-left position accordingly.
+
+    Methods:
+        center, top_left, top_right, top_center, bottom_left, bottom_right, bottom_center, middle_left, middle_right
+        Each of these methods anchors the relevant point to the (x, y) coordinate given.
+    """
     @staticmethod
     def center(widget, x, y):
         widget.move(x - widget.width() // 2, y - widget.height() // 2)

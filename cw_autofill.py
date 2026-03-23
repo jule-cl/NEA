@@ -1,9 +1,6 @@
-# crossword_filler.py
+# cw_autofill.py
 
 """
-apparently this is better
-searches through clues and backtracks when fails
-
 algorithm outline:
 order clues to fill by "priority"
 get most "prioritised" clue
@@ -11,42 +8,60 @@ if no possible words fit in that space:
     get rid of the most recent clue placed that intersects with the clue and try again
 if there are words:
     pick word (pattern) and place it there
-
-TODO:
-the process of choosing a candidate can be reworked to get better words
 """
+
+from copy import deepcopy
 
 from cw_clue import CW_Clue
 from minheap import Min_Heap
 from app_info import *
 
-from copy import deepcopy
-      
 class Autofill:
+    """
+    Automatically fills a crossword grid with valid words using a backtracking search algorithm.
+    Clues are prioritised by a score reflecting how constrained they are.
+    The algorithm backtracks when no valid word can be placed in a slot, or the maximum attempts have been reached.
+
+    Variables:
+        __crossword (Crossword): A deep copy of the crossword object being filled.
+        __GRID_SIZE (int): The size of the grid.
+        __all_clues (list[CW_Clue]): List of all clue objects in the crossword.
+        __corner_clues (dict): Maps cell numbers to their across and down clues for intersecting cells.
+        __corner_checked (dict): Maps cell numbers to whether each direction has been filled.
+
+    Methods:
+        fill: Runs the autofill algorithm and returns the completed crossword or False if unsolvable.
+    """
     def __init__(self, crossword):
-        # takes in crossword object
+        """
+        Initialises the Autofill instance with a deep copy of the given crossword.
+
+        Args:
+            crossword (Crossword): The crossword object to autofill.
+        """
         self.__crossword = deepcopy(crossword)
         self.__GRID_SIZE = self.__crossword.get_grid_size()
         
-        self.__all_clues = self.__crossword.get_all_clues() # list of all clue objects
-        self.__corner_clues = {} # clues at all corners (across: *across clue*, down: *down clue*)
-        self.__corner_checked = {} # dict of all corners (across: T/F, down:T/F) indicating whether the relevant clue has been placed
+        self.__all_clues = self.__crossword.get_all_clues()
+        self.__corner_clues = {}
+        self.__corner_checked = {}
         self.__update_corners()
         
     def __update_corners(self):
+        """
+        Finds all cells part of two words (corners) in the grid and records which clues pass through them in each direction.
+        """
         cell_clue_directions = [[{} for _ in range(self.__GRID_SIZE)] for __ in range(self.__GRID_SIZE)]
         for clue in self.__all_clues:
             for cell_row, cell_col in clue.cells:
                 cell_clue_directions[cell_row][cell_col][clue.direction] = clue
 
-        # find corner positions, the clues that go through them, and initialise whether they have been filled from either direction
         for index_r, row in enumerate(cell_clue_directions):
             for index_c, col in enumerate(row):
-                if len(col.keys()) == 2: # both part of across and down
+                if len(col.keys()) == 2:
                     self.__corner_clues[self.__to_cell_number(index_r, index_c)] = {'A':col['A'], 'D':col['D']}
                     self.__corner_checked[self.__to_cell_number(index_r, index_c)] = {'A':False, 'D':False}
         
-        # find which clues intersect which clues
         for clue in self.__all_clues:
             clue.intersections = set()
             for row, col in clue.cells:
@@ -59,6 +74,17 @@ class Autofill:
             clue.intersection_positions = [i for i, cell in enumerate(clue.cells) if self.__to_cell_number(cell[0], cell[1]) in self.__corner_checked.keys()]
                         
     def fill(self, constraint=5):
+        """
+        Runs the backtracking autofill algorithm, placing words into clue slots in priority order.
+        Backtracks when a slot has no valid candidates or has exceeded the attempt limit.
+
+        Args:
+            constraint (int): The maximum number of attempts allowed per clue before the algorithm backtracks. Defaults to 5.
+
+        Returns:
+            Crossword: The filled crossword object if a solution is found.
+            bool: False if no solution exists.
+        """
         self.filled_clues = []
         
         self.clues_to_fill = Min_Heap()
@@ -71,7 +97,7 @@ class Autofill:
 
             self.current_clue = self.clues_to_fill.get_root()
 
-            if self.current_clue.score == 0 or self.current_clue.attempts == constraint: # no possibilities, so backtrack 
+            if not self.current_clue.get_possible_words() or self.current_clue.attempts == constraint: # no possibilities, so backtrack 
                 if not self.filled_clues: return False # back to first clue, no solutions
                 self.__remove_clue(self.__find_conflict_source(self.clues_to_fill.get_root()))
                 continue 
@@ -87,13 +113,19 @@ class Autofill:
             self.filled_clues.append(self.current_clue)
             self.__update_priority(self.current_clue)
             self.current_clue.attempts += 1
-                
-            # self.print_grid()
-            # input()
 
         return self.__crossword
     
     def __find_conflict_source(self, failed_clue):
+        """
+        Finds the most recently filled clue that intersects with the given failed clue.
+
+        Args:
+            failed_clue (CW_Clue): The clue that could not be filled.
+
+        Returns:
+            CW_Clue: The most recently filled intersecting clue, or the last filled clue if no intersection is found.
+        """
         for clue in self.filled_clues[::-1]:
             if set(clue.cells).intersection(set(failed_clue.cells)): return clue
             
@@ -101,7 +133,12 @@ class Autofill:
         return self.filled_clues[-1] if self.filled_clues else None
             
     def __remove_clue(self, clue_to_remove):
-        # remove word from grid and allow pattern to be used again
+        """
+        Removes the word in the given clue slot from the grid, and records it as a failed word for that clue.
+        
+        Args:
+            clue_to_remove (CW_Clue): The clue whose word should be removed and retried.
+        """
         removed_word = self.__remove_word(clue_to_remove)
         self.__remove_from_used_words(removed_word)
         # record the failed pattern, not letting to be used in this clue
@@ -118,6 +155,14 @@ class Autofill:
         self.__update_priority(clue_to_remove)
     
     def __place_word(self, clue, word):
+        """
+        Places a word into the grid at the given clue slot.
+        Updates scores of clues intersecting the filled clue.
+
+        Args:
+            clue (CW_Clue): The clue slot to fill.
+            word (str): The word to place in the grid.
+        """
         self.__add_to_used_words(word)
         for index, (row, col) in enumerate(clue.cells):
             self.__crossword.change_letter(row, col, word[index])
@@ -128,6 +173,16 @@ class Autofill:
                 self.__corner_checked[cell_num][clue.direction] = True
             
     def __remove_word(self, clue):
+        """
+        Removes a word from the grid for the given clue.
+        Clears cell that are not still filled by an intersecting clue in the other direction.
+
+        Args:
+            clue (CW_Clue): The clue whose word should be removed.
+
+        Returns:
+            str: The word that was removed.
+        """
         word = clue.word
         for row, col in clue.cells:
             cell_num = self.__to_cell_number(row, col)
@@ -143,15 +198,32 @@ class Autofill:
         return word
         
     def __add_to_used_words(self, word):
+        """
+        Marks a word as used across all clues, preventing it from being placed again.
+
+        Args:
+            word (str): The word to mark as used.
+        """
         for clue in self.__all_clues:
             clue.used_words.add(word)
             
     def __remove_from_used_words(self, word):
+        """
+        Removes a word from the used words set across all clues, allowing it to be placed again.
+
+        Args:
+            word (str): The word to unmark as used.
+        """
         for clue in self.__all_clues:
             clue.used_words.remove(word)
           
-    # updates score and priority of all clues still needed to fill and that intersect the affected clue
     def __update_priority(self, affected_clue):
+        """
+        Updates the priority score of the affected clue and all clues that intersect it, reinserting them into the priority queue with their new scores.
+
+        Args:
+            affected_clue (CW_Clue): The clue whose placement has affected intersecting clues.
+        """
         for clue in affected_clue.intersections.union(set([affected_clue])):
             if self.clues_to_fill.has_node(clue): 
                 self.clues_to_fill.pop_node(clue)
@@ -159,29 +231,21 @@ class Autofill:
                 self.clues_to_fill.insert_node(clue)
                 
     def __to_cell_number(self, r, c):
+        """
+        Converts a (row, col) grid position to a unique integer cell number.
+
+        Args:
+            r (int): Row #.
+            c (int): Column #.
+
+        Returns:
+            int: The cell number corresponding to the given position.
+        """
         return r * self.__GRID_SIZE + c
 
     def print_grid(self):
-        print('\n'.join([' '.join([c if c else '?' for c in row]) for row in grid])+'\n')
-
-if __name__ == '__main__':
-    import time
-    from cw_layout_filler import Crossword_Layout
-    
-    layout = Crossword_Layout(size=15)
-    
-    start = time.time()
-    grid = layout.generate_layout()
-    end = time.time()
-    print(f'layout gen: {end-start:.2f} s')
-    
-    filler = Autofill(grid)
-    filler.print_grid()
-    
-    start = time.time()
-    filler.fill(constraint=5)
-    end = time.time()
-    
-    filler.print_grid()
-    print(f'Auto fill: {end-start:.2f} s')
-
+        """
+        Used for debugging.
+        Prints a text representation of the current grid state to the console, displaying '?' for empty cells.
+        """
+        print('\n'.join([' '.join([c if c else '?' for c in row]) for row in self.grid])+'\n')

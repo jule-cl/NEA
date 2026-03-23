@@ -1,3 +1,9 @@
+# test.py
+
+"""
+Used to parse the word_list file, calculating the scores of each word beforehand to avoid wasting time everytime upon loading app.
+"""
+
 from app_info import *
 import json
 from wordfreq import word_frequency
@@ -46,7 +52,7 @@ if __name__ == '__main__':
                         2.61, 2.30, 2.11, 2.09, 2.03, 1.82, 1.49, 1.11, 0.69, 0.17, 0.11, 0.10, 0.07]
     # https://pi.math.cornell.edu/~mec/2003-2004/cryptography/subs/frequencies.html
     LETTER_SCORE = {l:s/100 for l, s in zip(LETTERS_BY_FREQUENCY, LETTER_FREQUENCIES)}
-    WORD_POP = {DISPLAYED_TO_WORD[word]: word_frequency(word, "en") for word in ALL_DISPLAYED} # higher number -> more common
+    WORD_POP = {DISPLAYED_TO_WORD[word]: 1-word_frequency(word, "en") for word in ALL_DISPLAYED} # lower number -> more common
     WORD_INFO = {DISPLAYED_TO_WORD[word]: {"score": get_displayed_score(word), "displayed": word} for word in ALL_DISPLAYED if word}
     
     with open(WORD_DATA_FILE, "w") as f:
