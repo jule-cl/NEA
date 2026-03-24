@@ -59,19 +59,16 @@ class Autofill:
         for index_r, row in enumerate(cell_clue_directions):
             for index_c, col in enumerate(row):
                 if len(col.keys()) == 2:
-                    self.__corner_clues[self.__to_cell_number(index_r, index_c)] = {'A':col['A'], 'D':col['D']}
-                    self.__corner_checked[self.__to_cell_number(index_r, index_c)] = {'A':False, 'D':False}
+                    self.__corner_clues[self.__crossword.to_cell_number(index_r, index_c)] = {'A':col['A'], 'D':col['D']}
+                    self.__corner_checked[self.__crossword.to_cell_number(index_r, index_c)] = {'A':False, 'D':False}
         
         for clue in self.__all_clues:
             clue.intersections = set()
             for row, col in clue.cells:
-                cell_num = self.__to_cell_number(row, col)
+                cell_num = self.__crossword.to_cell_number(row, col)
                 if cell_num in self.__corner_clues.keys(): 
                     for intersecting_clue in self.__corner_clues[cell_num].values():
                         if intersecting_clue != clue: clue.intersections.add(intersecting_clue)
-                    
-            # get positions of intersection
-            clue.intersection_positions = [i for i, cell in enumerate(clue.cells) if self.__to_cell_number(cell[0], cell[1]) in self.__corner_checked.keys()]
                         
     def fill(self, constraint=5):
         """
@@ -168,7 +165,7 @@ class Autofill:
             self.__crossword.change_letter(row, col, word[index])
             
             # set checked to true in the correct direction and place it in the other
-            cell_num = self.__to_cell_number(row, col)
+            cell_num = self.__crossword.to_cell_number(row, col)
             if cell_num in self.__corner_checked.keys():
                 self.__corner_checked[cell_num][clue.direction] = True
             
@@ -185,7 +182,7 @@ class Autofill:
         """
         word = clue.word
         for row, col in clue.cells:
-            cell_num = self.__to_cell_number(row, col)
+            cell_num = self.__crossword.to_cell_number(row, col)
             other_dir = CW_Clue.other_direction(clue.direction)
             
             if cell_num in self.__corner_checked.keys():
@@ -229,19 +226,6 @@ class Autofill:
                 self.clues_to_fill.pop_node(clue)
                 clue.update_score()
                 self.clues_to_fill.insert_node(clue)
-                
-    def __to_cell_number(self, r, c):
-        """
-        Converts a (row, col) grid position to a unique integer cell number.
-
-        Args:
-            r (int): Row #.
-            c (int): Column #.
-
-        Returns:
-            int: The cell number corresponding to the given position.
-        """
-        return r * self.__GRID_SIZE + c
 
     def print_grid(self):
         """

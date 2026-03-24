@@ -23,13 +23,14 @@ CLUE_LETTER_SIZE = 0.65
 TEXT_FONT = "Arial"
 
 # generation related
-GRID_SIZES = [11, 13, 15]
 BASE_SELECTION_OPTIONS = ["top-left", "top-right", "bottom-left", "bottom-right", "random"]
 SYMMETRY_OPTIONS = {"None":1, "2-fold":2, "4-fold":4}
 DIRECTION = {'A': 'across', 'D':'down'}
 CONSTRAINT_OPTIONS = [("Low", 3), ("Medium", 5), ("High", 8)]
 WORD_DATA_FILE = "word_data.json"
-IMAGE_PATHS = ["images/pic_a.png", "images/pic_b.png", "images/pic_c.png"]
+IMAGE_PATHS = {size: f"images/size{size}.png" for size in range(9, 23, 2)}
+IMAGES_PER_ROW = 4
+MAX_ALT_WORD_LIMIT = 10
 
 # weights for scoring
 class Weights:

@@ -2,7 +2,7 @@
 
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit
 from PyQt6.QtCore import Qt
-from clickable_image import Clickable_Image
+from widgets_custom import Clickable_Image
 from widget_positioner import Widget_Positioner
 from widgets_custom import Button
 from app_info import *
@@ -45,15 +45,23 @@ class Creation_Screen(QWidget):
         layout.addWidget(text)
         
         # images layout
-        grid_size_labels_layout = QHBoxLayout()
+        # creates two rows, uses the images for the corresponding grid size
+        grid_size_labels_layout = QVBoxLayout()
         self.grid_size_labels = {}
-        for i in range(len(GRID_SIZES)):
-            image = IMAGE_PATHS[i]
-            grid_size = GRID_SIZES[i]
-            label = Clickable_Image(image, grid_size)
+        count = 0
+        row_layout = QHBoxLayout()
+        for size, image_path in IMAGE_PATHS.items():
+            label = Clickable_Image(image_path, size)
             label.clicked.connect(self.on_image_clicked)
-            self.grid_size_labels[GRID_SIZES[i]] = label
-            grid_size_labels_layout.addWidget(label)
+            self.grid_size_labels[size] = label
+            row_layout.addWidget(label)
+            count += 1
+            
+            if count == IMAGES_PER_ROW:
+                count = 0
+                grid_size_labels_layout.addLayout(row_layout)
+                row_layout = QHBoxLayout()
+        grid_size_labels_layout.addLayout(row_layout)
         layout.addLayout(grid_size_labels_layout)
         
         # title text box

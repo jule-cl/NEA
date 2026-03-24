@@ -1,6 +1,6 @@
 # screen_clues.py
 
-from PyQt6.QtWidgets import QWidget, QLabel, QVBoxLayout, QHBoxLayout, QGridLayout, QTabWidget, QScrollArea, QLineEdit
+from PyQt6.QtWidgets import QWidget, QLabel, QVBoxLayout, QHBoxLayout, QGridLayout, QTabWidget, QScrollArea, QLineEdit, QDialog
 from PyQt6.QtCore import Qt, pyqtSignal, QPointF
 
 from widget_positioner import Widget_Positioner
@@ -179,7 +179,17 @@ class Clues_Info_Box(QWidget):
             word += f"{Word_Funcs.displayed_to_word(selected_clue.word)} ({selected_clue.clue_length})"
         self.__current_clue_label.setText(clue)
         self.__current_word_label.setText(word)
-        
+        # word list
+        for i in reversed(range(self.word_layout.count())):
+            widget = self.word_layout.itemAt(i).widget()
+            if widget:
+                widget.deleteLater()
+        if selected_clue:
+            for word in selected_clue.get_possible_words(intersections_only=True)[:MAX_ALT_WORD_LIMIT]:
+                label = QLabel(Word_Funcs.displayed_to_word(word))
+                label.setStyleSheet(f"color: {Theme.FOREGROUND}; font-size: 13px;")
+                self.word_layout.addWidget(label)
+                
         # clue tab
         for i, clue in enumerate(self.cw_controller.get_all_clues()):
             offset = int(clue.direction == 'D')+1
@@ -219,14 +229,43 @@ class Clues_Info_Box(QWidget):
         self.clear_button = Button("Clear all words")
         self.clear_button.clicked.connect(self.cw_controller.clear_grid)
         layout.addWidget(self.clear_button)
+        
+        # definition search row
+        search_row = QHBoxLayout()
+        self.__search_input = QLineEdit()
+        self.__search_input.setPlaceholderText("Search word...")
+        self.__search_input.setStyleSheet(f"color: {Theme.FOREGROUND}; border: 1px solid {Theme.FOREGROUND}; padding: 4px; border-radius: 4px;")
+        search_button = Button("Search")
+        search_button.clicked.connect(self.__search_definition)
+        search_row.addWidget(self.__search_input)
+        search_row.addWidget(search_button)
+        layout.addLayout(search_row)
 
-        # selected clue + word labels
+        # selected clue + word labels + possible words title
         self.__current_clue_label = QLabel("")
         self.__current_word_label = QLabel("")
+        # self.__possible_words_label = QLabel("Possible/Alternate words:")
         for label in [self.__current_clue_label, self.__current_word_label]:
             label.setStyleSheet(f"color: {Theme.FOREGROUND}; font-size: 18px;")
             layout.addWidget(label)
-
+            
+        # scroll area for possible words
+        self.word_scroll = QScrollArea()
+        self.word_scroll.setWidgetResizable(True)
+        self.word_scroll.setFixedHeight(200)
+        self.word_container = QWidget()
+        self.word_layout = QVBoxLayout(self.word_container)
+        self.word_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.word_scroll.setWidget(self.word_container)
+        self.word_scroll.setStyleSheet(f"""
+            QScrollArea {{
+            border: 4px solid {Theme.FOREGROUND};
+            border-radius: 6px;
+            background-color: {Theme.BACKGROUND};
+        }}
+        """)
+        layout.addWidget(self.word_scroll)
+        
         return tab
 
     def create_clue_tab(self):
@@ -291,3 +330,68 @@ class Clues_Info_Box(QWidget):
         scroll.setWidget(container)
         outer_layout.addWidget(scroll)
         return tab
+
+    def __search_definition(self):
+        """
+        Reads the search input, fetches the definition using Word_Funcs,
+        and opens a Definition_Window to display the results.
+        """
+        word = self.__search_input.text().strip()
+        if not word: return
+        definitions = Word_Funcs.get_definition(word)
+        Definition_Window(word, definitions)
+
+class Definition_Window(QDialog):
+    """
+    A popup window that displays the dictionary definitions of a given word,
+    grouped by part of speech.
+
+    Args:
+        word (str): The word to display definitions for.
+        definitions (list[dict]): A list of definition entries, each containing
+                                  'pos' and 'definition' keys.
+    """
+    def __init__(self, word, definitions):
+        super().__init__()
+        self.setWindowTitle(f"Definition: {word.upper()}")
+        self.setFixedWidth(400)
+        self.setFixedHeight(400)
+        self.setStyleSheet(f"background-color: {Theme.BACKGROUND};")
+
+        layout = QVBoxLayout(self)
+
+        title = QLabel(word.upper())
+        title.setStyleSheet(f"color: {Theme.FOREGROUND}; font-size: 20px; font-weight: bold;")
+        layout.addWidget(title)
+
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setStyleSheet("border: none;")
+        container = QWidget()
+        container_layout = QVBoxLayout(container)
+        container_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        container_layout.setSpacing(8)
+
+        if not definitions:
+            no_result = QLabel("No definitions found.")
+            no_result.setStyleSheet(f"color: {Theme.FOREGROUND}; font-size: 14px;")
+            container_layout.addWidget(no_result)
+        else:
+            current_pos = None
+            for i, entry in enumerate(definitions):
+                # part of speech header
+                if entry['pos'] != current_pos:
+                    current_pos = entry['pos']
+                    pos_label = QLabel(current_pos.capitalize())
+                    pos_label.setStyleSheet(f"color: {Theme.SECONDARY_BACKGROUND}; font-size: 14px; font-weight: bold;")
+                    container_layout.addWidget(pos_label)
+
+                # definition
+                def_label = QLabel(f"{i+1}. {entry['definition']}")
+                def_label.setWordWrap(True)
+                def_label.setStyleSheet(f"color: {Theme.FOREGROUND}; font-size: 13px;")
+                container_layout.addWidget(def_label)
+
+        scroll.setWidget(container)
+        layout.addWidget(scroll)
+        self.exec()

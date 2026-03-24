@@ -69,24 +69,29 @@ class CW_Clue:
         self.failed_words = set()
         self.score = inf
         
-    def __get_regex(self):
+    def __get_regex(self, intersections_only=False):
         """
         Builds a regex pattern from the current word, replacing empty cells with '*'.
+        If intersections_only is True, then the regex is created ingoring the other letters.
 
         Returns:
             str: A pattern string where empty cells are represented as '*'.
         """
-        return ''.join(['*' if c==EMPTY_CELL else c for c in self.word])
+        if not intersections_only:
+            return ''.join(['*' if c==EMPTY_CELL else c for c in self.word])
+        else:
+            return ''.join(['*' if c==EMPTY_CELL or index not in self.intersection_positions else c for index, c in enumerate(self.word)])
     
-    def get_possible_words(self):
+    def get_possible_words(self, intersections_only=False):
         """
         Returns a sorted, filtered list of valid candidate words for this clue based on the current letter pattern, 
         excluding used and previously failed words.
+        If intersections_only is True, then the regex is created ingoring the other letters. Used to find alternate words.
 
         Returns:
             list[str]: Candidate words sorted by word score, with used and failed words removed.
         """
-        regex = self.__get_regex()
+        regex = self.__get_regex(intersections_only)
         candidates = sorted([w for w in Word_Funcs.get_words_that_match(regex)], key=lambda w:Word_Funcs.get_word_score(w))
         candidates = list(filter(lambda w: w not in self.used_words, candidates))
         candidates = list(filter(lambda w: w not in self.failed_words, candidates))

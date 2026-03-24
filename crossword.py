@@ -18,6 +18,7 @@ class Crossword:
         __grid (list[list[str]]): 2D list storing the contents of each cell.
         __numbered_cells (list[tuple[int, int, str]]): List of (row, col, direction) tuples for numbered cells.
         __all_clues (list[CW_Clue]): List of all clues derived from the current grid layout.
+        __checked_cells (set[tuple[int, int]]): A set containing all checked cells.
 
     Methods:
         save: Serialises the crossword to a JSON file at the given filepath.
@@ -50,11 +51,10 @@ class Crossword:
         
         self.__GRID_SIZE = grid_size
         self.__grid = [] # coordinates are 0-indexed
-        self.empty_grid()
-
         self.__numbered_cells = [] # (row, col, direction)
+        self.__checked_cells = set()
         self.__all_clues = []
-        self.__update_clues()
+        self.empty_grid()
 
     # saving / loading
     def save(self):
@@ -138,6 +138,7 @@ class Crossword:
     # layout related methods
     def __update_numbered_cells(self):
         self.__numbered_cells = []
+        self.__checked_cells = set()
         for row, col in product(range(self.__GRID_SIZE), repeat=2):
             # check if cell should be numbered
             direction = ""
@@ -152,6 +153,8 @@ class Crossword:
             
             # add to list if exists
             if direction: self.__numbered_cells.append((row, col, direction))
+            
+            if self.is_cell_checked((row, col)): self.__checked_cells.add((row, col))
             
     def __update_clues(self, sentences=None): 
         # done after layout is confirmed, and always updates numbered cells
@@ -189,6 +192,9 @@ class Crossword:
                 if d == 'D': down.append(new_clue)
                 
         self.__all_clues = across + down
+        
+        for clue in self.__all_clues:
+            clue.intersection_positions = [i for i, cell in enumerate(clue.cells) if cell in self.__checked_cells]
 
     def flip_blocked_symmetry(self, row, col, symmetry):
         """
@@ -420,6 +426,19 @@ class Crossword:
             if row != self.__GRID_SIZE-1 and self.__grid[row+1][col] != BLOCKED_CELL: return True
             return False
         raise Exception("direction invalid")
+
+    def to_cell_number(self, r, c):
+        """
+        Converts a (row, col) grid position to a unique integer cell number.
+
+        Args:
+            r (int): Row #.
+            c (int): Column #.
+
+        Returns:
+            int: The cell number corresponding to the given position.
+        """
+        return r * self.__GRID_SIZE + c
 
     def print_grid(self):
         """Prints a text representation of the grid to the console. Used for debugging"""
