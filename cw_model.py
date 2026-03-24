@@ -296,6 +296,12 @@ class CW_Model:
         """
         return self.__crossword.is_grid_clear()
 
+    def get_errors(self):
+        """
+        Method used during editing the layout to display errors, if any
+        """
+        return self.__crossword.get_errors()
+
     def __is_cell_corner(self, cell):
         """
         Returns whether the given cell belongs to both an across and a down word.

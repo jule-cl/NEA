@@ -42,7 +42,6 @@ class Crossword_Layout:
             size (int): The size of the actual grid. Must be provided before calling any generation methods.
         """
         self.__GRID_SIZE = size
-        self.empty_grid()
         
     def __flip_cell(self, row, col):
         """
@@ -126,7 +125,7 @@ class Crossword_Layout:
         for row_num, row in enumerate(grid):
             for col_num, cell in enumerate(row):
                 if cell == BLOCKED_CELL: 
-                    self.__flip_cell(row_num, col_num)
+                    self.__flip_cell(row_num+1, col_num+1)
 
     def generate_layout(self, target_ratio, base, symmetry):
         """
@@ -142,6 +141,8 @@ class Crossword_Layout:
         Returns:
             list[list[str]]: The generated grid without border cells.
         """
+        self.empty_grid() # should already be empty, this will also initialise variables
+        
         if base == None: 
             if symmetry == 4: base = choice([0, 3])
             else: base = randint(0, 3)
@@ -179,8 +180,8 @@ class Crossword_Layout:
         Returns:
             bool: True if the grid passes all checks, False otherwise.
         """
-        return self.__two_letter_word_check() and self.__connectivity_check() \
-                and self.__two_unch_check() and self.__block_clump_check()
+        return self.__connectivity_check() and self.__two_letter_word_check()[0]\
+                and self.__two_unch_check()[0] and self.__block_clump_check()[0]
                         
     def __connectivity_check(self):
         """
@@ -190,7 +191,7 @@ class Crossword_Layout:
         Returns:
             bool: True if all empty cells are reachable from each other, False otherwise.
         """
-        visited = []
+        self.__visited = []
         to_visit = deque([self.__empty_cells[0]])
         
         while to_visit:
@@ -199,16 +200,16 @@ class Crossword_Layout:
             for d_row, d_col in O_DIRECTIONS:
                 new_row, new_col = current[0]+d_row, current[1]+d_col
                 
-                if (new_row, new_col) in visited: continue
+                if (new_row, new_col) in self.__visited: continue
                 if (new_row, new_col) in to_visit: continue
                 if self.__grid[new_row][new_col] == BLOCKED_CELL: continue
                 if not (1 <= new_row <= self.__GRID_SIZE and 1 <= new_col <= self.__GRID_SIZE): continue
                 
                 to_visit.append((new_row, new_col))
                 
-            visited.append(current)
+            self.__visited.append(current)
             
-        return len(visited) == len(self.__empty_cells)
+        return len(self.__visited) == len(self.__empty_cells)
                 
     def __two_letter_word_check(self):
         """
@@ -227,7 +228,7 @@ class Crossword_Layout:
                 new_result.translate_bitboard(row, col)
     
                 if new_overlay.get_bit_board() & self.__grid_bitboard.get_bit_board() == new_result.get_bit_board():
-                    return False
+                    return False, [(row+1, col), (row+2, col)]
                 
         overlay = Bitboard([(0, i) for i in range(4)], self.__GRID_SIZE+2)
         result_if_true = Bitboard([(0, 0), (0, 3)], self.__GRID_SIZE+2)
@@ -239,9 +240,9 @@ class Crossword_Layout:
                 new_result.translate_bitboard(row, col)
     
                 if new_overlay.get_bit_board() & self.__grid_bitboard.get_bit_board() == new_result.get_bit_board():
-                    return False
+                    return False, [(row, col+1), (row, col+2)]
                 
-        return True
+        return True, []
         
     def __two_unch_check(self):
         """
@@ -260,7 +261,7 @@ class Crossword_Layout:
                 new_result.translate_bitboard(row, col)
     
                 if new_overlay.get_bit_board() & self.__grid_bitboard.get_bit_board() == new_result.get_bit_board():
-                    return False
+                    return False, [(row, col+1), (row+1, col+1)]
              
         overlay = Bitboard([(j, i) for i in [0, 1] for j in [0, 1, 2]], self.__GRID_SIZE+2)
         result_if_true = Bitboard([(j, i) for i in [0, 1] for j in [0, 2]], self.__GRID_SIZE+2)
@@ -272,9 +273,9 @@ class Crossword_Layout:
                 new_result.translate_bitboard(row, col)
     
                 if new_overlay.get_bit_board() & self.__grid_bitboard.get_bit_board() == new_result.get_bit_board():
-                    return False
+                    return False, [(row+1, col), (row+1, col+1)]
                 
-        return True
+        return True, []
 
     def __block_clump_check(self):
         """
@@ -290,9 +291,32 @@ class Crossword_Layout:
                 new_overlay.translate_bitboard(row, col)
     
                 if new_overlay.get_bit_board() & self.__grid_bitboard.get_bit_board() == new_overlay.get_bit_board():
-                    return False
+                    return False, [(row, col), (row, col+1), (row+1, col), (row+1, col+1)]
                 
-        return True
+        return True, []
+    
+    def get_errors(self):
+        """
+        This method is used to find errors which will be displayed on the grid.
+        
+        Returns:
+            tuple[str, list[tuple[int, int]]] or None
+            If there is an error, the error the relevant cells are return. Otherwise None.
+        """
+        errors = {}
+        
+        # all cell row and column # needs to subtracted by 1, as the numbering is indexed from 1 here and not anywhere else
+        if not self.__connectivity_check(): 
+            cell1, cell2 = min(list(set(self.__empty_cells).difference(self.__visited))), min(self.__visited)
+            errors[ERRORS.CONNECTIVITY] = [(cell1[0]-1, cell1[1]-1), (cell2[0]-1, cell2[1]-1)]
+        word_length = self.__two_letter_word_check()
+        if not word_length[0]: errors[ERRORS.WORD_LEN] = [(r-1, c-1) for r, c in word_length[1]]
+        two_unch = self.__two_unch_check()
+        if not two_unch[0]: errors[ERRORS.TWO_UNCH] = [(r-1, c-1) for r, c in two_unch[1]]
+        block_clump = self.__block_clump_check()
+        if not block_clump[0]: errors[ERRORS.BLOCK_CLUMP] = [(r-1, c-1) for r, c in block_clump[1]]
+        
+        return errors
     
     """GETTERS""" 
     def get_borderless_grid(self):

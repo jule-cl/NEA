@@ -175,6 +175,12 @@ class CW_Controller(QObject):
         self.model.clear_grid()
         self.draw()
       
+    def get_errors(self):
+        """
+        Method used during editing the layout to display errors, if any
+        """
+        return self.model.get_errors()
+      
     def get_all_clues(self):
         """
         Returns all clues in the crossword.

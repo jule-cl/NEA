@@ -4,7 +4,7 @@ from PyQt6.QtWidgets import QWidget, QLabel, QVBoxLayout, QHBoxLayout
 from PyQt6.QtCore import Qt, pyqtSignal, QPointF
 
 from widget_positioner import Widget_Positioner
-from widgets_custom import Button, ComboBox
+from widgets_custom import Button, ComboBox, WarningBox
 from cw_model import CW_Model
 from cw_view import CW_View
 from cw_controller import CW_Controller
@@ -56,6 +56,7 @@ class Layout_Screen(QWidget):
         self.info_box = Layout_Info_Box(self.cw_controller)
         self.info_box.setParent(self)
         self.cw_controller.update_info.connect(self.info_box.update)
+        self.info_box.draw_errors.connect(lambda errors: self.cw_view.draw(CW_MODE.LAYOUT, errors))
         # leave
         leave_button = Button("Back to Menu", self)
         leave_button.clicked.connect(back_to_title)
@@ -112,6 +113,8 @@ class Layout_Info_Box(QWidget):
         get_symmetry: Returns the currently selected symmetry value.
         update: Refreshes all statistics labels and button states based on current grid state.
     """
+    draw_errors = pyqtSignal(dict)
+    
     def __init__(self, cw_controller):
         """
         Initialises the info box with layout tools and statistics labels.
@@ -161,6 +164,7 @@ class Layout_Info_Box(QWidget):
         self.empty_button.clicked.connect(self.cw_controller.empty_grid)
         # errors button
         self.errors_button = Button("Check/Show errors", self)
+        self.errors_button.clicked.connect(self.__show_errors)
         # put in overall layout
         actions_layout.addWidget(self.actions_title)
         actions_layout.addLayout(self.generate_layout_layout)
@@ -274,3 +278,12 @@ class Layout_Info_Box(QWidget):
         self.average_length.setText(f"Average word length: {average_word_length:.2f}")
         self.no_of_words.setText(f"# of words: {no_of_words}")
         self.checked_cells.setText(f"# of checked cells: {no_of_checked}")
+
+    def __show_errors(self):
+        # show result
+        errors = self.cw_controller.get_errors()
+        if errors:
+            self.draw_errors.emit(errors)
+            WarningBox(f"Errors found:\n{'\n'.join(errors.keys())}", False)
+        else:
+            WarningBox("No errors found! The layout looks valid.", False)

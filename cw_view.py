@@ -44,13 +44,14 @@ class CW_View(QGraphicsView):
         self.setScene(self.scene)
         self.setSceneRect(self.rect().toRectF())
         
-    def draw(self, editing_mode):
+    def draw(self, editing_mode, errors=None):
         """
         Clears and redraws the entire grid, including cell colours, letters, and clue numbers. 
         The cell colour is decided by whether the cell is blocked, selected, or part of the selected word, depending on the editing mode.
 
         Args:
             editing_mode (CW_MODE): The current editing mode, either LAYOUT or CLUES.
+            errors (dict or None): displaying any errors on the grid layout, if any. Used in the grid layout generation stage.
         """
         self.scene.clear()
         self.setStyleSheet(f"background: transparent; border: none;")
@@ -67,9 +68,8 @@ class CW_View(QGraphicsView):
                     if (r, c) == selected_cell: colour = Theme.SELECTED_CELL
                     elif (r, c) in cells_in_selected_clue: colour = Theme.SELECTED_WORD
                     
-                x, y = c * self.cell_size + self.grid_left, r * self.cell_size + self.grid_top
-                
                 # draw cell
+                x, y = c * self.cell_size + self.grid_left, r * self.cell_size + self.grid_top
                 rect = QGraphicsRectItem(x, y, self.cell_size, self.cell_size)
                 rect.setBrush(QBrush(QColor(colour)))
                 if (r, c) == selected_cell: rect.setPen(QPen(QColor(Theme.HIGHLIGHT), self.cell_size*SELECTED_OUTLINE))
@@ -101,6 +101,26 @@ class CW_View(QGraphicsView):
             if (row, col) == selected_cell: 
                 number.setZValue(100)
             self.scene.addItem(number)
+            
+        # draw errors
+        if errors:
+            for r, c in [cell for _ in errors.values() for cell in _]:
+                x, y = c * self.cell_size + self.grid_left, r * self.cell_size + self.grid_top
+                rect = QGraphicsRectItem(x, y, self.cell_size, self.cell_size)
+                rect.setBrush(QBrush(QColor(Theme.ERROR_COLOUR)))
+                rect.setPen(QPen(QColor(Theme.ERROR_HIGHLIGHT), self.cell_size*SELECTED_OUTLINE))
+                rect.setData(0, (r, c))
+                rect.setZValue(200)
+                self.scene.addItem(rect)
+                
+                # draw '!'
+                symbol = QGraphicsSimpleTextItem('!')
+                symbol.setFont(QFont(TEXT_FONT, int(self.cell_size*CLUE_LETTER_SIZE)))
+                symbol.setBrush(QColor(Theme.ERROR_HIGHLIGHT))
+                bounding_rect = symbol.boundingRect()
+                symbol.setPos(x + self.cell_size/2 - bounding_rect.width()/2, y + self.cell_size/2 - bounding_rect.height()/2)
+                symbol.setZValue(200) # move selected to top
+                self.scene.addItem(symbol)
 
     def rect_at(self, pos):
         """

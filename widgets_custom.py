@@ -77,7 +77,7 @@ class WarningBox(QMessageBox):
         confirm_button (QPushButton): The Yes button, with AcceptRole.
         reject_button (QPushButton): The No button, with RejectRole.
     """
-    def __init__(self, text, *args, **kwargs):
+    def __init__(self, text, comfirmation=True, *args, **kwargs):
         """
         Initialises and immediately displays the warning box with the given message.
         Each warning box will have two buttons: one for confirming and one for rejecting.
@@ -107,8 +107,11 @@ class WarningBox(QMessageBox):
             }}
         """)
         
-        self.confirm_button = self.addButton("Yes", QMessageBox.ButtonRole.AcceptRole)
-        self.reject_button = self.addButton("No", QMessageBox.ButtonRole.RejectRole)
+        if comfirmation:
+            self.confirm_button = self.addButton("Yes", QMessageBox.ButtonRole.AcceptRole)
+            self.reject_button = self.addButton("No", QMessageBox.ButtonRole.RejectRole)
+        else:
+            self.continue_button = self.addButton("OK", QMessageBox.ButtonRole.AcceptRole)
         
         self.exec()
 

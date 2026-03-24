@@ -6,6 +6,7 @@ from datetime import date
 import os
 import json
 
+from cw_layout_filler import Crossword_Layout
 from cw_clue import CW_Clue
 from app_info import *
 
@@ -244,6 +245,15 @@ class Crossword:
         for clue in self.__all_clues:
             if (row, col) in clue.cells: clues.add(clue)
         return clues
+
+    def get_errors(self):
+        """
+        Checks the current grid for crossword validity errors.
+        """
+        layout = Crossword_Layout(self.__GRID_SIZE)
+        layout.set_grid(self.__grid)
+        
+        return layout.get_errors()
 
     # editing words
     def change_letter(self, row, col, letter, update_lengths=True):

@@ -54,6 +54,12 @@ class CW_MODE:
     LAYOUT = "layout"
     CLUES = "clues"
     
+class ERRORS:
+    CONNECTIVITY = "The grid isn't fully connected"
+    WORD_LEN = "The minimum word length should be 3"
+    TWO_UNCH = "There are two unches orthogonally adjacent"
+    BLOCK_CLUMP = "There are 4 blocked cells in the form of a 2-by-2"
+    
 """
 Class that defines colour which will be used throughout the program
 """
@@ -61,10 +67,12 @@ class Theme:
     BACKGROUND = "#e5fff6"
     SECONDARY_BACKGROUND = "#c4c7c6"
     FOREGROUND = "#261b26"
-    BLOCKED_CELL = "#261b26"
+    BLOCKED_CELL = "#383438"
     SELECTED_CELL =  "#f4f76a"
     SELECTED_WORD = "#f69221"
     HIGHLIGHT = "#173dff"
+    ERROR_HIGHLIGHT = "#ff4444"
+    ERROR_COLOUR = "#f29090"
     CELL_BASE = "#f4f7f6"
     
     BUTTON_ACTION = "#261b26"
