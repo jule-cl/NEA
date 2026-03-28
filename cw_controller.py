@@ -1,6 +1,7 @@
 # cw_controller.py
 
 from PyQt6.QtCore import QObject, Qt, pyqtSignal
+from widgets_custom import WarningBox
 from app_info import *
 
 class CW_Controller(QObject):
@@ -165,6 +166,8 @@ class CW_Controller(QObject):
         """
         Clears all cells in the grid including blocked cells, resetting it to fully empty.
         """
+        warning = WarningBox("Are you sure? This will set all cells in the grid to empty and cannot be undone.")
+        if warning.clickedButton() == warning.reject_button: return
         self.model.empty_grid()
         self.draw()
         
@@ -172,6 +175,8 @@ class CW_Controller(QObject):
         """
         Removes all letters from the grid while preserving blocked cells.
         """
+        warning = WarningBox("Are you sure? This will remove all letters in the grid and cannot be undone.")
+        if warning.clickedButton() == warning.reject_button: return
         self.model.clear_grid()
         self.draw()
       
